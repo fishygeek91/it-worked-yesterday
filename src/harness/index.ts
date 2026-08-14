@@ -1,7 +1,18 @@
 export {
+  fnv1a,
+  generateImportedHistory,
+  IMPORT_MAX_SUSPECTS,
+  IMPORT_MIN_SUSPECTS,
+  importCase,
+  parseFastExport,
+  type ExportCommit,
+  type ImportInput,
+} from "./importCase";
+export {
   createSession,
   dispatch,
   isDiamondInput,
+  isImportInput,
   isOctopusInput,
   type BlamePeek,
   type GameSession,

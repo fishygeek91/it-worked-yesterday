@@ -4,6 +4,7 @@ import {
   createSession,
   dispatch,
   isDiamondInput,
+  isImportInput,
   isOctopusInput,
   type GameSession,
   type SessionCommand,
@@ -490,6 +491,11 @@ export function shareUrl(session: GameSession): string {
     session.outcome === "playing" && session.transcript.length > 0
       ? { transcript: session.transcript }
       : { marks: session.marks };
+  if (isImportInput(session.input)) {
+    // Imported cases live in the chosen file, not the address bar: no
+    // share link, no `t`, no door.
+    invalidUrl("imported cases have no url");
+  }
   if (isOctopusInput(session.input)) {
     if (sameOctopusInput(session.input, OCTOPUS_INPUT)) {
       return serializeUrl({ level: "octopus", ...clock });

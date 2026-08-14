@@ -357,12 +357,12 @@ Human-authorized 2026-08-18 by chat charter. Scope is the v2.1 section of [docs/
 
 ### TASK 31 — Import a case
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 26, TASK 28
 - **Deliverables:** The narrow real-git exception per the v2.1 design section: a `git fast-export` importer in `src/harness` behind the existing fake-git session. File control on the desk. Merge commits and chains outside 2–64 suspects are refused. Seed is FNV-1a of the export bytes. One planted first-bad. `docs/DEVIATIONS.md` paragraph on why not WASM.
 - **Acceptance:**
-  - [ ] A fixture produced by real `git fast-export` (committed as text) parses: topology and subjects extracted, blob data blocks skipped by byte count.
-  - [ ] A merge commit from disk throws `GameError` (`INVALID_IMPORT`); chains yielding fewer than 2 or more than 64 suspects are refused; no coerce, no truncation.
-  - [ ] Same file → same dungeon: exactly one first-bad, honest walk wins, real subjects on the rooms, engine SHAs ours.
-  - [ ] Imported cases expose no share link and no `t`; `reset` replants from the kept import; the win card works; no server; no runtime dependency; the `DEVIATIONS.md` paragraph exists.
-  - [ ] e2e: choosing the fixture file on the desk starts the imported case and it is winnable by marking what the room said.
+  - [x] A fixture produced by real `git fast-export` (committed as text) parses: topology and subjects extracted, blob data blocks skipped by byte count.
+  - [x] A merge commit from disk throws `GameError` (`INVALID_IMPORT`); chains yielding fewer than 2 or more than 64 suspects are refused; no coerce, no truncation.
+  - [x] Same file → same dungeon: exactly one first-bad, honest walk wins, real subjects on the rooms, engine SHAs ours.
+  - [x] Imported cases expose no share link and no `t`; `reset` replants from the kept import; the win card works; no server; no runtime dependency; the `DEVIATIONS.md` paragraph exists.
+  - [x] e2e: choosing the fixture file on the desk starts the imported case and it is winnable by marking what the room said.

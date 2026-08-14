@@ -400,6 +400,27 @@ body::after {
   color: var(--amber-rim);
 }
 
+/* The v2.1 real-git exception: one file control, parsed on the page. */
+.import {
+  display: block;
+  margin: 0.35rem 0 0;
+  color: var(--mute);
+  font-size: 0.8rem;
+}
+
+.import input {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--mute);
+  font-size: 0.8rem;
+}
+
+.import-note {
+  margin: 0.2rem 0 0;
+  color: var(--magenta);
+  font-size: 0.9rem;
+}
+
 .range,
 .fairness,
 .keys {

@@ -1,5 +1,5 @@
 import type { GameSession, SessionInput } from "./session";
-import { isDiamondInput, isOctopusInput } from "./session";
+import { isDiamondInput, isImportInput, isOctopusInput } from "./session";
 import {
   FRIDAY_INPUT,
   HOTFIX_INPUT,
@@ -48,7 +48,7 @@ export function markTutorialDone(store: TutorialStore): void {
  * @param input - Generate input
  */
 export function isTutorialInput(input: SessionInput): boolean {
-  if (isDiamondInput(input) || isOctopusInput(input)) {
+  if (isDiamondInput(input) || isOctopusInput(input) || isImportInput(input)) {
     return false;
   }
   return (
@@ -65,7 +65,7 @@ export function isTutorialInput(input: SessionInput): boolean {
  * @param input - Generate input
  */
 export function isYesterdayInput(input: SessionInput): boolean {
-  if (isDiamondInput(input) || isOctopusInput(input)) {
+  if (isDiamondInput(input) || isOctopusInput(input) || isImportInput(input)) {
     return false;
   }
   return (
@@ -98,7 +98,7 @@ export function isMergedInput(input: SessionInput): boolean {
  * @param input - Session pin
  */
 export function isFridayInput(input: SessionInput): boolean {
-  if (isDiamondInput(input) || isOctopusInput(input)) {
+  if (isDiamondInput(input) || isOctopusInput(input) || isImportInput(input)) {
     return false;
   }
   return (
