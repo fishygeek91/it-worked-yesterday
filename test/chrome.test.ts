@@ -108,6 +108,14 @@ describe("renderChrome", () => {
     expect(html).toMatch(/data-command="accuse" data-cost="[^"]+">accuse<\/button>/);
     expect(html).toMatch(/data-command="good" data-cost="[^"]+" disabled>/);
     expect(html).toMatch(/data-command="bad" data-cost="[^"]+" disabled>/);
+    expect(html).toContain("One SHA remains. Accuse it.");
+    expect(renderChrome(started)).not.toContain("One SHA remains. Accuse it.");
+  });
+
+  it("keeps help open when the visit says so", () => {
+    const html = renderChrome(createSession(TUTORIAL), { tutorialDone: true, helpOpen: true });
+    expect(html).toContain("<details class=\"help\" open>");
+    expect(renderChrome(createSession(TUTORIAL))).toContain("<details class=\"help\">");
   });
 });
 

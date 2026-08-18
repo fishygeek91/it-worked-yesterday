@@ -37,6 +37,7 @@ test("wins the tutorial by marking what the room said", async ({ page }) => {
     await markWhatTheRoomSaid(page);
   }
   await expect(accuse).toBeEnabled();
+  await expect(page.locator(".ready")).toHaveText("One SHA remains. Accuse it.");
   await accuse.click();
 
   await expect(page.locator(".outcome")).toHaveText("Accused. That SHA was the first-bad.");

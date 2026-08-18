@@ -190,3 +190,13 @@ One task per session. Do not start the next until the current task's acceptance 
   - [x] The desk shows the parser line and case doors; it does not render a map.
   - [x] A loss names the accused short SHA and does not show the win hunk or the first-bad SHA.
   - [x] Blame that exceeds optimal prints `Over the clock.` without changing the `marks / optimal` element.
+
+### TASK 17 — Desk memory
+
+- **Status:** ✅
+- **Deps:** TASK 16
+- **Deliverables:** Help stays open across marks (page memory, not `localStorage`). Escape closes it. Ready line when one SHA remains. Accused document title after accuse.
+- **Acceptance:**
+  - [x] `renderChrome` emits `<details class="help" open>` only when `helpOpen` is true.
+  - [x] Ready copy is `One SHA remains. Accuse it.` and is absent while searching.
+  - [x] Tutorial teach lines stay the three pinned sentences.

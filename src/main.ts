@@ -53,6 +53,11 @@ function bootVisit(search: string): Boot {
 let boot = bootVisit(window.location.search);
 
 /**
+ * Help `<details>` state for this page load. Not `localStorage`.
+ */
+let helpOpen = false;
+
+/**
  * Map a key to a session command. Letters only; no modifiers.
  *
  * @param key - event.key
@@ -108,13 +113,16 @@ function paint(): void {
   const hi = indexOfSha(session.bisect.repo, session.bisect.knownBad);
   const remaining = hi - lo;
   document.documentElement.dataset.outcome = session.outcome;
-  document.title =
-    remaining === 1
-      ? "accuse — it-worked-yesterday"
-      : `${String(remaining)} suspects — it-worked-yesterday`;
+  if (session.outcome !== "playing") {
+    document.title = "accused — it-worked-yesterday";
+  } else if (remaining === 1) {
+    document.title = "accuse — it-worked-yesterday";
+  } else {
+    document.title = `${String(remaining)} suspects — it-worked-yesterday`;
+  }
   const parts = [
     `<div id="map">${renderGraph(buildViewModel(session))}</div>`,
-    renderChrome(session, { tutorialDone: isTutorialDone(store) }),
+    renderChrome(session, { tutorialDone: isTutorialDone(store), helpOpen }),
   ];
   if (session.outcome === "won") {
     parts.push(renderWinCard(session));
@@ -123,6 +131,12 @@ function paint(): void {
   const head = app.querySelector("[data-label=\"HEAD\"]");
   if (head instanceof Element) {
     head.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
+  }
+  const help = app.querySelector(".help");
+  if (help instanceof HTMLDetailsElement) {
+    help.addEventListener("toggle", () => {
+      helpOpen = help.open;
+    });
   }
 }
 
@@ -177,10 +191,20 @@ window.addEventListener("keydown", (event: KeyboardEvent) => {
   if (event.metaKey || event.ctrlKey || event.altKey) {
     return;
   }
+  if (event.key === "Escape") {
+    const help = app.querySelector(".help");
+    if (help instanceof HTMLDetailsElement && help.open) {
+      help.open = false;
+      helpOpen = false;
+      event.preventDefault();
+    }
+    return;
+  }
   if (event.key === "?" || event.key === "/") {
     const help = app.querySelector(".help");
     if (help instanceof HTMLDetailsElement) {
       help.open = !help.open;
+      helpOpen = help.open;
       event.preventDefault();
     }
     return;
