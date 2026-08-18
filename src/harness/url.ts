@@ -40,7 +40,10 @@ export const TUTORIAL_INPUT: GenerateInput = {
   mutation: "offByOneLoopBound",
 };
 
-const YESTERDAY_INPUT: GenerateInput = {
+/**
+ * Pinned yesterday dungeon. n=16, first-bad 14 (last quarter), flippedBoolean.
+ */
+export const YESTERDAY_INPUT: GenerateInput = {
   suspectCount: 16,
   firstBadIndex: 14,
   seed: 1729,

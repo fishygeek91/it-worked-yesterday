@@ -8,6 +8,7 @@ export {
 export {
   isTutorialDone,
   isTutorialInput,
+  isYesterdayInput,
   markTutorialDone,
   sessionForVisit,
   TUTORIAL_DONE_KEY,
@@ -18,6 +19,7 @@ export {
   serializeUrl,
   sessionFromUrl,
   TUTORIAL_INPUT,
+  YESTERDAY_INPUT,
   type LevelId,
   type UrlState,
 } from "./url";
