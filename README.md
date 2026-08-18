@@ -14,7 +14,7 @@ You accuse one SHA. If it is the first bad, you were right. Share the seed.
 
 ## Play live
 
-_GitHub Pages URL goes here._
+https://fishygeek91.github.io/it-worked-yesterday/
 
 ## Run locally
 
