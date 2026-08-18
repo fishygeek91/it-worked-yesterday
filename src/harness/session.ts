@@ -1,5 +1,6 @@
 import {
   accuse,
+  checkout,
   commitAt,
   costOf,
   firstChangedFile,
@@ -33,7 +34,9 @@ export function isDiamondInput(input: SessionInput): input is DiamondGenerateInp
 }
 
 /**
- * Session commands. `blame` is the v1.1 peek; `checkout` stays reserved.
+ * Operand-free session commands. `blame` is the v1.1 peek. The v2.1
+ * `checkout <sha>` carries an operand, so it dispatches as a full
+ * command string, not as a member of this union.
  */
 export type SessionCommand = "good" | "bad" | "reset" | "accuse" | "blame";
 
@@ -113,6 +116,33 @@ function peekPath(session: GameSession): string | null {
 }
 
 /**
+ * The v2.1 penalty move: walk the lantern to `sha`, inside or outside the
+ * suspect set. It costs the reserved `checkout` row and buys no evidence:
+ * the suspect set, bounds, status, ledger, and transcript do not move.
+ * Why no ledger line: the ledger records the interview, and a walk is
+ * not testimony. Why no transcript letter: `t` is an alphabet, not a
+ * grammar — see the v2.1 design section.
+ *
+ * @param session - Current session
+ * @param sha - Full SHA of the room to walk to
+ */
+function dispatchCheckout(session: GameSession, sha: string): GameSession {
+  const cost = costOf("checkout");
+  if (session.outcome !== "playing") {
+    return session;
+  }
+  const repo = checkout(session.bisect.repo, sha);
+  const bisect: BisectState = { ...session.bisect, repo, current: sha };
+  return {
+    ...session,
+    bisect,
+    marks: session.marks + cost,
+    lastResult: suiteAtCurrent(bisect),
+    lastPeek: null,
+  };
+}
+
+/**
  * Plant a dungeon and start at the first midpoint. Marks start at zero.
  *
  * @param input - Linear pin or the v2.0 diamond pin
@@ -138,12 +168,21 @@ export function createSession(input: SessionInput): GameSession {
  * Why the test (not this function) chooses good/bad: the engine must not
  * auto-mark; a bad investigation can accuse the wrong SHA.
  *
- * `blame` names a path and does not move the range. `checkout` stays rejected.
+ * `blame` names a path and does not move the range. `checkout <sha>` is
+ * the v2.1 penalty move: one operand, full SHA, may leave the range.
  *
  * @param session - Current session
- * @param command - Raw command name
+ * @param command - Raw command name, or `checkout <sha>`
  */
 export function dispatch(session: GameSession, command: string): GameSession {
+  const words = command.split(" ");
+  if (words[0] === "checkout") {
+    const sha = words[1];
+    if (words.length !== 2 || sha === undefined || sha.length === 0) {
+      throw new GameError("INVALID_COMMAND", "checkout needs exactly one sha");
+    }
+    return dispatchCheckout(session, sha);
+  }
   if (!isSessionCommand(command)) {
     throw new GameError("INVALID_COMMAND", `unknown session command ${command}`);
   }

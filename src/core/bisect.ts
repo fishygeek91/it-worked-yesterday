@@ -165,6 +165,10 @@ export function midpoint(state: BisectState): Sha | null {
 
 /**
  * Apply `git bisect good` or `git bisect bad` to the current room.
+ * A mark is only legal at the checkout the engine chose. Why: the v2.1
+ * `checkout` can park the lantern anywhere, but the `t` transcript is an
+ * alphabet — if a mark could name an arbitrary room, `g`/`b` could not
+ * rebuild the search and the save file would lie.
  *
  * @param state - Current search
  * @param verdict - Player mark
@@ -178,6 +182,9 @@ export function mark(state: BisectState, verdict: "good" | "bad"): BisectState {
   }
   if (!state.suspects.includes(state.current)) {
     throw new GameError("INVALID_MARK", "current is not in the suspect set");
+  }
+  if (state.current !== splitSuspect(state.repo, state.suspects)) {
+    throw new GameError("INVALID_MARK", "the interview is at another room");
   }
   const related = new Set(ancestors(state.repo, state.current));
   const suspects =
