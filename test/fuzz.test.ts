@@ -5,7 +5,9 @@ import {
   diamondLayout,
   generateBuggyHistory,
   generateDiamondHistory,
+  generateOctopusHistory,
   mulberry32,
+  octopusLayout,
   type DiamondLane,
   type MutationId,
   type Rng,
@@ -93,6 +95,32 @@ describe("seeded diamond fuzz (200)", () => {
         firstBadOnLane,
       });
       expect(optimalAccuse(generated), `diamond seed ${String(seed)}`).toBe(generated.firstBad);
+    }
+  });
+});
+
+describe("seeded octopus fuzz (200)", () => {
+  it("honest walks accuse the planted first-bad on 200 octopus seeds", () => {
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const rng = mulberry32(seed);
+      const laneCount = 3 + rng.nextInt(3);
+      const suspectCount = laneCount + 2 + rng.nextInt(25);
+      const layout = octopusLayout(suspectCount, laneCount);
+      const firstBadLane = rng.nextInt(laneCount);
+      const lane = layout.laneIndices[firstBadLane];
+      if (lane === undefined || lane.length === 0) {
+        throw new GameError("INVALID_INDEX", `fuzz: empty octopus lane at seed ${String(seed)}`);
+      }
+      const firstBadOnLane = rng.nextInt(lane.length);
+      const generated = generateOctopusHistory({
+        suspectCount,
+        laneCount,
+        seed,
+        mutation: pickMutation(rng),
+        firstBadLane,
+        firstBadOnLane,
+      });
+      expect(optimalAccuse(generated), `octopus seed ${String(seed)}`).toBe(generated.firstBad);
     }
   });
 });

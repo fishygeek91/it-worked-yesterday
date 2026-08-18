@@ -126,3 +126,27 @@ export type DiamondLayout = {
   mergeIndex: number;
   tailIndex: number;
 };
+
+/**
+ * Input for the v2.1 octopus: `laneCount >= 3` lanes forking at the
+ * known-good root and joining at one octopus merge before HEAD.
+ * `firstBadLane` is the 0-based lane; `firstBadOnLane` is the 0-based
+ * position along that lane.
+ */
+export type OctopusGenerateInput = {
+  suspectCount: number;
+  laneCount: number;
+  seed: number;
+  mutation: MutationId;
+  firstBadLane: number;
+  firstBadOnLane: number;
+};
+
+/**
+ * Measured octopus: one order-index list per lane, one join, one tail.
+ */
+export type OctopusLayout = {
+  laneIndices: number[][];
+  mergeIndex: number;
+  tailIndex: number;
+};

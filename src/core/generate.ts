@@ -1,12 +1,20 @@
 import { applyMutation, goodTree } from "./bugs";
 import { GameError } from "./errors";
-import { createHistory, createLinearHistory, type HistoryCommitSpec, type LinearCommitSpec } from "./git";
+import {
+  createHistory,
+  createLinearHistory,
+  mergeBase,
+  type HistoryCommitSpec,
+  type LinearCommitSpec,
+} from "./git";
 import { mulberry32 } from "./prng";
 import type {
   DiamondGenerateInput,
   DiamondLayout,
   GeneratedHistory,
   GenerateInput,
+  OctopusGenerateInput,
+  OctopusLayout,
 } from "./types";
 
 /**
@@ -199,6 +207,131 @@ export function generateDiamondHistory(input: DiamondGenerateInput): GeneratedHi
   const firstBad = repo.order[firstBadOrder];
   if (knownGood === undefined || knownBad === undefined || firstBad === undefined) {
     throw new GameError("EMPTY_REPO", "diamond generator failed to pin bounds");
+  }
+  return { repo, firstBad, knownGood, knownBad };
+}
+
+/**
+ * Measure the v2.1 octopus for `n` suspects and `k` lanes: `k` lanes fork
+ * at the root and join at one octopus merge, then one tail (HEAD). The
+ * remainder commits go to the earliest lanes so every lane length is
+ * deterministic from `n` and `k` alone.
+ *
+ * @param suspectCount - Suspects, including every lane, the join, and HEAD
+ * @param laneCount - Lanes; `>= 3` makes the join an octopus
+ */
+export function octopusLayout(suspectCount: number, laneCount: number): OctopusLayout {
+  if (!Number.isInteger(laneCount) || laneCount < 3) {
+    throw new GameError(
+      "INVALID_INDEX",
+      `octopus laneCount must be an integer >= 3, got ${String(laneCount)}`,
+    );
+  }
+  const laneTotal = suspectCount - 2;
+  if (!Number.isInteger(suspectCount) || laneTotal < laneCount) {
+    throw new GameError(
+      "INVALID_INDEX",
+      `octopus suspectCount must be an integer >= ${String(laneCount + 2)}, got ${String(suspectCount)}`,
+    );
+  }
+  const base = Math.floor(laneTotal / laneCount);
+  const remainder = laneTotal % laneCount;
+  const laneIndices: number[][] = [];
+  let next = 1;
+  for (let lane = 0; lane < laneCount; lane += 1) {
+    const length = base + (lane < remainder ? 1 : 0);
+    const indices: number[] = [];
+    for (let i = 0; i < length; i += 1) {
+      indices.push(next);
+      next += 1;
+    }
+    laneIndices.push(indices);
+  }
+  return { laneIndices, mergeIndex: next, tailIndex: next + 1 };
+}
+
+/**
+ * Build one octopus: `k` lanes fork at the known-good root and join at a
+ * single merge of every lane tip, then HEAD. First-bad is pinned on one
+ * lane; the failure persists in DAG descendants, so every other lane
+ * stays green and the join is red. The generator asserts the root is the
+ * merge-base of all lane tips — the puzzle rests on that fact.
+ *
+ * @param input - n, lane count, seed, mutation, lane pin
+ */
+export function generateOctopusHistory(input: OctopusGenerateInput): GeneratedHistory {
+  const { suspectCount, laneCount, seed, mutation, firstBadLane, firstBadOnLane } = input;
+  const layout = octopusLayout(suspectCount, laneCount);
+  const lane = layout.laneIndices[firstBadLane];
+  if (!Number.isInteger(firstBadLane) || lane === undefined) {
+    throw new GameError(
+      "INVALID_INDEX",
+      `firstBadLane must be in [0, ${String(laneCount - 1)}], got ${String(firstBadLane)}`,
+    );
+  }
+  const firstBadOrder = lane[firstBadOnLane];
+  if (!Number.isInteger(firstBadOnLane) || firstBadOrder === undefined) {
+    throw new GameError(
+      "INVALID_INDEX",
+      `firstBadOnLane must be in [0, ${String(lane.length - 1)}], got ${String(firstBadOnLane)}`,
+    );
+  }
+
+  const parentLists: number[][] = [[]];
+  const laneTips: number[] = [];
+  for (const indices of layout.laneIndices) {
+    for (let i = 0; i < indices.length; i += 1) {
+      const order = indices[i];
+      const previous = indices[i - 1];
+      if (order === undefined) {
+        throw new GameError("INVALID_INDEX", "octopus lane lost an index");
+      }
+      parentLists[order] = [i === 0 ? 0 : (previous ?? 0)];
+    }
+    const tip = indices[indices.length - 1];
+    if (tip === undefined) {
+      throw new GameError("EMPTY_REPO", "octopus lane is empty");
+    }
+    laneTips.push(tip);
+  }
+  parentLists[layout.mergeIndex] = [...laneTips];
+  parentLists[layout.tailIndex] = [layout.mergeIndex];
+
+  const red = plannedDescendants(parentLists, firstBadOrder);
+  const rng = mulberry32(seed);
+  const specs: HistoryCommitSpec[] = [];
+  for (let i = 0; i < parentLists.length; i += 1) {
+    const parents = parentLists[i];
+    if (parents === undefined) {
+      throw new GameError("INVALID_INDEX", `missing octopus parents at ${String(i)}`);
+    }
+    const salt = rng.nextInt(0x7fffffff);
+    let tree = goodTree(`commit ${String(i)} salt ${String(salt)}`);
+    if (red.has(i)) {
+      tree = applyMutation(tree, mutation);
+    }
+    const message =
+      i === 0 ? "it worked here" : i === firstBadOrder ? "adjust the walk bound" : `snapshot ${String(i)}`;
+    specs.push({ message, tree, parentIndices: parents });
+  }
+
+  const repo = createHistory(specs);
+  const knownGood = repo.order[0];
+  const knownBad = repo.order[layout.tailIndex];
+  const firstBad = repo.order[firstBadOrder];
+  if (knownGood === undefined || knownBad === undefined || firstBad === undefined) {
+    throw new GameError("EMPTY_REPO", "octopus generator failed to pin bounds");
+  }
+  const tipShas = laneTips.map((index) => {
+    const sha = repo.order[index];
+    if (sha === undefined) {
+      throw new GameError("INVALID_INDEX", "octopus lane tip lost its sha");
+    }
+    return sha;
+  });
+  const base = mergeBase(repo, tipShas);
+  if (base.length !== 1 || base[0] !== knownGood) {
+    throw new GameError("INVALID_RANGE", "octopus known-good must be the merge-base of all lane tips");
   }
   return { repo, firstBad, knownGood, knownBad };
 }

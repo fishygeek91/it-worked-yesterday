@@ -1,9 +1,10 @@
 import { GameError, isUint32, mulberry32 } from "../core";
-import type { DiamondGenerateInput, GenerateInput, MutationId } from "../core";
+import type { DiamondGenerateInput, GenerateInput, MutationId, OctopusGenerateInput } from "../core";
 import {
   createSession,
   dispatch,
   isDiamondInput,
+  isOctopusInput,
   type GameSession,
   type SessionCommand,
   type SessionInput,
@@ -12,7 +13,7 @@ import {
 /**
  * Level id in `l`. Case-sensitive. `learn` is a case file, not a dungeon.
  */
-export type LevelId = "tutorial" | "yesterday" | "seeded" | "learn" | "merged";
+export type LevelId = "tutorial" | "yesterday" | "seeded" | "learn" | "merged" | "octopus";
 
 /**
  * Letters in the `t` param. Accuse is not in the alphabet: a finished
@@ -33,6 +34,7 @@ export type UrlState =
   | ({ level: "tutorial" } & UrlClock)
   | ({ level: "yesterday" } & UrlClock)
   | ({ level: "merged" } & UrlClock)
+  | ({ level: "octopus" } & UrlClock)
   | ({ level: "seeded"; n: 32 | 64; seed: number } & UrlClock)
   | { level: "learn" };
 
@@ -91,6 +93,20 @@ export const MERGED_INPUT: DiamondGenerateInput = {
 };
 
 /**
+ * Pinned octopus dungeon per the v2.1 design table: The release train.
+ * n=32, three lanes of ten, first-bad on lane 1 at suspect 4,
+ * invertedSortComparator.
+ */
+export const OCTOPUS_INPUT: OctopusGenerateInput = {
+  suspectCount: 32,
+  laneCount: 3,
+  seed: 1729,
+  mutation: "invertedSortComparator",
+  firstBadLane: 1,
+  firstBadOnLane: 4,
+};
+
+/**
  * Throw `INVALID_URL`. URL edges use this code, not `INVALID_SEED`.
  *
  * @param message - Postmortem line
@@ -110,7 +126,8 @@ function isLevelId(value: string): value is LevelId {
     value === "yesterday" ||
     value === "seeded" ||
     value === "learn" ||
-    value === "merged"
+    value === "merged" ||
+    value === "octopus"
   );
 }
 
@@ -251,6 +268,23 @@ function sameDiamondInput(left: DiamondGenerateInput, right: DiamondGenerateInpu
 }
 
 /**
+ * True when two octopus pins are the same dungeon.
+ *
+ * @param left - First pin
+ * @param right - Second pin
+ */
+function sameOctopusInput(left: OctopusGenerateInput, right: OctopusGenerateInput): boolean {
+  return (
+    left.suspectCount === right.suspectCount &&
+    left.laneCount === right.laneCount &&
+    left.seed === right.seed &&
+    left.mutation === right.mutation &&
+    left.firstBadLane === right.firstBadLane &&
+    left.firstBadOnLane === right.firstBadOnLane
+  );
+}
+
+/**
  * Map parsed URL state to a generate input. `learn` refuses: it has no
  * history to plant, and coercing it into one would invent a fourth dungeon.
  *
@@ -268,6 +302,9 @@ function inputFromUrl(state: UrlState): SessionInput {
   }
   if (state.level === "merged") {
     return MERGED_INPUT;
+  }
+  if (state.level === "octopus") {
+    return OCTOPUS_INPUT;
   }
   return seededInput(state.n, state.seed);
 }
@@ -319,6 +356,9 @@ export function parseUrl(search: string): UrlState {
   }
   if (levelRaw === "merged") {
     return { level: "merged", ...clock };
+  }
+  if (levelRaw === "octopus") {
+    return { level: "octopus", ...clock };
   }
   return { level: "tutorial", ...clock };
 }
@@ -402,14 +442,23 @@ export function shareUrl(session: GameSession): string {
     session.outcome === "playing" && session.transcript.length > 0
       ? { transcript: session.transcript }
       : { marks: session.marks };
-  if (!isDiamondInput(session.input) && sameLinearInput(session.input, TUTORIAL_INPUT)) {
+  if (isOctopusInput(session.input)) {
+    if (sameOctopusInput(session.input, OCTOPUS_INPUT)) {
+      return serializeUrl({ level: "octopus", ...clock });
+    }
+    invalidUrl("only the pinned octopus has a url");
+  }
+  if (isDiamondInput(session.input)) {
+    if (sameDiamondInput(session.input, MERGED_INPUT)) {
+      return serializeUrl({ level: "merged", ...clock });
+    }
+    invalidUrl("only the pinned diamond has a url");
+  }
+  if (sameLinearInput(session.input, TUTORIAL_INPUT)) {
     return serializeUrl({ level: "tutorial", ...clock });
   }
-  if (!isDiamondInput(session.input) && sameLinearInput(session.input, YESTERDAY_INPUT)) {
+  if (sameLinearInput(session.input, YESTERDAY_INPUT)) {
     return serializeUrl({ level: "yesterday", ...clock });
-  }
-  if (isDiamondInput(session.input) && sameDiamondInput(session.input, MERGED_INPUT)) {
-    return serializeUrl({ level: "merged", ...clock });
   }
   const n = session.input.suspectCount;
   if (n !== 32 && n !== 64) {
