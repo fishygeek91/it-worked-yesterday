@@ -139,11 +139,46 @@ function doorLink(href: string, label: string, current: boolean): string {
 }
 
 /**
+ * Which door is the open case file. `none` for the invalid-share desk.
+ */
+export type OpenCase = "tutorial" | "yesterday" | "seeded32" | "seeded64" | "learn" | "none";
+
+/**
+ * Doors into the case files. One cabinet shared by the play desk, the learn
+ * page, and the invalid-share desk so the doors cannot drift apart.
+ *
+ * @param options - Open case, seed for the seeded doors, optional next-seed door
+ */
+export function renderDoors(options: {
+  current: OpenCase;
+  seed: number;
+  next?: { n: 32 | 64; seed: number };
+}): string {
+  const { current, seed, next } = options;
+  const parts = [
+    `<nav class="doors" aria-label="cases">`,
+    doorLink("?l=tutorial", "Tutorial", current === "tutorial"),
+    doorLink("?l=yesterday", "Yesterday", current === "yesterday"),
+    doorLink("?l=learn", "Learn", current === "learn"),
+    doorLink(`?l=seeded&n=32&seed=${String(seed)}`, "Seeded 32", current === "seeded32"),
+    doorLink(`?l=seeded&n=64&seed=${String(seed)}`, "Seeded 64", current === "seeded64"),
+  ];
+  if (next !== undefined) {
+    parts.push(
+      doorLink(`?l=seeded&n=${String(next.n)}&seed=${String(next.seed)}`, "Next seed", false),
+    );
+  }
+  parts.push(`</nav>`);
+  return parts.join("");
+}
+
+/**
  * Tiny exhibit: message plus the first real file that changed.
+ * Shared with the learn walk so the win always shows the same evidence.
  *
  * @param session - Finished winning session
  */
-function exhibitCopy(session: GameSession): string {
+export function winExhibit(session: GameSession): string {
   if (session.outcome !== "won") {
     return "";
   }
@@ -183,21 +218,16 @@ function exhibitCopy(session: GameSession): string {
 function caseDoors(session: GameSession): string {
   const seed = session.input.seed;
   const n = session.input.suspectCount === 64 ? 64 : 32;
-  const nxt = nextSeed(seed);
-  const nextHref = `?l=seeded&n=${String(n)}&seed=${String(nxt)}`;
   const tutorial = isTutorialInput(session.input);
   const yesterday = isYesterdayInput(session.input);
-  const seeded32 = !tutorial && !yesterday && n === 32;
-  const seeded64 = !tutorial && !yesterday && n === 64;
-  return [
-    `<nav class="doors" aria-label="cases">`,
-    doorLink("?l=tutorial", "Tutorial", tutorial),
-    doorLink("?l=yesterday", "Yesterday", yesterday),
-    doorLink(`?l=seeded&n=32&seed=${String(seed)}`, "Seeded 32", seeded32),
-    doorLink(`?l=seeded&n=64&seed=${String(seed)}`, "Seeded 64", seeded64),
-    doorLink(nextHref, "Next seed", false),
-    `</nav>`,
-  ].join("");
+  const current: OpenCase = tutorial
+    ? "tutorial"
+    : yesterday
+      ? "yesterday"
+      : n === 64
+        ? "seeded64"
+        : "seeded32";
+  return renderDoors({ current, seed, next: { n, seed: nextSeed(seed) } });
 }
 
 /**
@@ -234,7 +264,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
       ? `<p class="share">${escapeHtml(query)}</p><button type="button" class="copy" data-copy="${escapeHtml(query)}">copy</button>`
       : "";
   const doors = visit !== undefined && visit.tutorialDone ? caseDoors(session) : "";
-  const exhibit = exhibitCopy(session);
+  const exhibit = winExhibit(session);
   const roomTone = session.lastResult.ok ? "lamp" : "rot";
   const phase = session.outcome === "playing" ? (canAccuse ? "ready" : "searching") : session.outcome;
   const meterPct = Math.round((remaining / session.bisect.suspectCount) * 100);

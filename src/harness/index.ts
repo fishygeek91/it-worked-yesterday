@@ -13,7 +13,9 @@ export {
   markTutorialDone,
   sessionForVisit,
   TUTORIAL_DONE_KEY,
+  visitForSearch,
   type TutorialStore,
+  type Visit,
 } from "./tutorial";
 export {
   parseUrl,

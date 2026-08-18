@@ -200,3 +200,14 @@ One task per session. Do not start the next until the current task's acceptance 
   - [x] `renderChrome` emits `<details class="help" open>` only when `helpOpen` is true.
   - [x] Ready copy is `One SHA remains. Accuse it.` and is absent while searching.
   - [x] Tutorial teach lines stay the three pinned sentences.
+
+### TASK 18 — Learn case
+
+- **Status:** ✅
+- **Deps:** TASK 15, TASK 16
+- **Deliverables:** `?l=learn` case-file page: full rules curriculum, clock table from `costOf`, four frozen hallway exhibits, one honest-walk stepper on the pinned tutorial, Learn door in every cabinet. No fourth dungeon.
+- **Acceptance:**
+  - [x] `?l=learn` parses; `?l=Learn` throws; `sessionFromUrl("?l=learn")` throws `INVALID_URL`.
+  - [x] Unseen visitors are routed to the pinned tutorial even when the URL asks for learn.
+  - [x] Locked sentences render; frozen exhibits keep every `data-sha`; no goblin voice.
+  - [x] The honest walk wins at `optimalMarks(8)` through `costOf` only; play keys do not drive it.

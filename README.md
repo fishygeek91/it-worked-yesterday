@@ -16,6 +16,8 @@ You accuse one SHA. If it is the first bad, you were right. Share the seed.
 
 https://fishygeek91.github.io/it-worked-yesterday/
 
+New to the case? Read the [learn file](https://fishygeek91.github.io/it-worked-yesterday/?l=learn) after the tutorial.
+
 ## Run locally
 
 ```
