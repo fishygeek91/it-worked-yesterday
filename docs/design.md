@@ -26,7 +26,7 @@ Bad: "A foul goblin lurks in SHA 9f3a!"
 - Not `npc-of-the-internet`. No soulchain, no Discord, no protocol, no keys.
 - Not a tutorial that only teaches `git bisect`.
 
-Do not invent a combat system, inventory, LLM, backend, auth, or a real git/WASM port.
+Do not invent a combat system, inventory, LLM, backend, or auth. The one narrow real-git exception is the v2.1 importer — an importer behind the fake-git session, never a rewrite of `src/core`. See the v2.1 section.
 
 ## Rules (v1)
 
@@ -316,7 +316,7 @@ Win card: 1200×630, guilty SHA lit, `marks / optimal`, seed in the corner.
 ### v1.1
 
 - `blame` — shipped: costly peek at which path changed
-- `checkout <sha>` — do not build; penalty move that can leave the range
+- `checkout <sha>` — reserved here; goes live in v2.1 (see the v2.1 section)
 
 ### v2.0 (launched — build per the v2.0 section below)
 
@@ -324,11 +324,16 @@ Win card: 1200×630, guilty SHA lit, `marks / optimal`, seed in the corner.
 - Mark-transcript resume in the URL (`t`)
 - One new pinned level: `merged`
 
-### v-later (do not build now; do not design toward it in code)
+### v2.1 (launched — build per the v2.1 section below)
 
-- Octopus merges, arbitrary DAGs, merge-base puzzles
-- GIF export, sound, extra levels beyond `merged`
-- Real git / WASM
+Human-authorized 2026-08-18 (chat charter). The old v-later list, unlocked:
+
+- `checkout <sha>` — the reserved score-table row goes live
+- Octopus merges, generated DAGs, merge-base as a puzzle primitive
+- Extra levels: `octopus`, `friday`, `hotfix` (the v2.1 level table only)
+- Sound (UI-only latch)
+- GIF export (win-only)
+- Real git — one narrow importer exception, not a WASM rewrite
 
 ### Never (not this game)
 
@@ -399,6 +404,151 @@ pinned levels. The renderer draws two lanes: trunk on the main row, branch
 on a second row, corridors fork and join. Linear dungeons keep the v1
 single-row layout byte-identical.
 
+## v2.1
+
+Human-authorized 2026-08-18 by chat charter. v1, v1.1, and v2.0 rules stay
+in force except where this section amends them. It unlocks the old
+v-later list. "Never" stays never: no backend, auth, LLM, inventory,
+combat. It amends exactly three locked decisions and no others:
+
+- **Linear only, except the single v2.0 diamond** → a generated merge
+  commit may now hold more than two parents (octopus). Arbitrary DAGs
+  stay generated, never imported.
+- **`checkout <sha>` stays reserved** → the reserved row goes live as a
+  penalty move at its reserved cost.
+- **Fake git, not real git** → one narrow importer exception behind the
+  existing fake-git session (see "Import a case"). Not a rewrite of
+  `src/core` into libgit2. Same seed still produces the same dungeon
+  when not importing.
+
+### checkout <sha>
+
+- New session command with one operand: `checkout <sha>` (full SHA). It
+  moves the carried lantern to any commit in the repo — including one
+  outside the remaining suspect set. That is the penalty: the move costs
+  a mark and may buy nothing.
+- Cost comes from the reserved `checkout` row through `costOf` only.
+  Never hardcoded. It writes no ledger line: the ledger records the
+  interview, and a walk is not testimony.
+- It does not change the suspect set, the recorded bounds, or the
+  status. `lastResult` becomes the suite verdict at the new room; the
+  last blame peek clears.
+- `good` / `bad` still require the current room to be in the suspect
+  set. Outside it they throw `INVALID_MARK` and the desk disables them
+  with the line `This room is outside the remaining range.` Walking back
+  is another `checkout` and costs again.
+- An unknown SHA throws `GameError` (`INVALID_SHA`). After the game
+  ends, `checkout` is ignored like every non-reset command.
+- Still not a real git checkout: HEAD moves, nothing else does.
+- **Not in the transcript alphabet.** `t` stays a string over `g`, `b`,
+  `l`. Why: `t` is an alphabet, not a grammar — every letter is one
+  operand-free command. `checkout` names a room; encoding rooms would
+  put SHAs into share links (a spoiler surface: a link could name the
+  guilty room in plain text) and make the save file unbounded. A
+  replayed link re-derives its checkout from the range rule, exactly as
+  before. So penalty moves do not travel: a mid-search share link
+  carries the evidence letters only, and the replayed clock counts the
+  evidence marks only. The transcript is the interview, not the pacing.
+- UI: clicking a room on the map walks there. One click, one mark.
+
+### Octopus + merge-base
+
+- `parents` may hold any count ≥ 0 in a generated repo. SHAs hash every
+  parent in order. The 0-, 1-, and 2-parent formulas are byte-identical
+  to v1 and v2.0: linear and diamond histories do not move.
+- `mergeBase(repo, shas)` is a core puzzle primitive, not git-for-real:
+  the best common ancestors — common ancestors of every input that are
+  not themselves ancestors of another common ancestor — in `repo.order`.
+  No commit-date heuristics; `repo.order` is the only tiebreak. On a
+  line, the merge-base of two commits is the older. On the diamond, the
+  merge-base of the two lane tips is the fork point.
+- The octopus generator builds one root (the known-good), `k >= 3` lanes
+  forking at the root, exactly one octopus merge joining every lane tip,
+  and one tail commit (HEAD). The known-good is the merge-base of all
+  lane tips — the generator asserts it. First-bad is pinned on one lane;
+  the failure persists in DAG descendants; every other lane stays green;
+  the join is red.
+- Suspect set and max-min split are unchanged. They were defined on DAG
+  ancestry in v2.0 and already reduce to the v1 line rule on linear
+  histories and the v2.0 diamond rule on a two-parent diamond. Both
+  reductions stay byte-identical.
+- Fuzz: 200 seeded octopus DAGs join the bars. The 200-linear and
+  200-diamond bars do not weaken.
+- Renderer: each lane gets one row; corridors fork at the root and meet
+  at the join; every commit keeps its `data-sha`; shape + label still
+  carry the signal, not color alone.
+
+### Levels (v2.1)
+
+All pinned: they ignore `n` and `seed` like tutorial, yesterday, and
+merged, and use a pinned internal seed. Same clock, same cost table,
+same postmortem tone. Doors in the cabinet. No loot, no XP, no fourth
+tutorial. Unseen visitors are still routed to the tutorial first.
+`octopus`, `friday`, and `hotfix` join the `l` values, case-sensitive.
+
+| Id | Name | `n` | Graph | First-bad | Mutation |
+| --- | --- | --- | --- | --- | --- |
+| `octopus` | The release train | 32 | 3 lanes of 10, one octopus join | Lane index `1`, suspect `4` on that lane | `invertedSortComparator` |
+| `friday` | The Friday deploy | 64 | Linear | Suspect index `61` | `sliceFencepost` |
+| `hotfix` | The hotfix | 16 | One diamond | Trunk lane, index `3` | `brokenComparison` |
+
+`octopus` ships with the octopus/merge-base task; `friday` and `hotfix`
+ship with the extra-levels task. This table is exhaustive: no level
+exists that it does not name.
+
+### Sound
+
+- UI-only. `src/ui/sound.ts` synthesizes short cues with the Web Audio
+  API — no asset files, no runtime dependency: one cue each for a good
+  mark, a bad mark, a win, a loss, and reset.
+- Muted by default. One latch in the chrome toggles it for this page
+  load (page memory, like the help panel — not `localStorage`). The
+  `AudioContext` is created on the unmute gesture. No autoplay surprise.
+- `src/core` and `src/harness` are untouched: still no `Date.now` or
+  `Math.random` there. The latch never touches the clock.
+
+### GIF export
+
+- Win-only. A `save gif` control beside `save card`, rendered only on a
+  win.
+- Frames are deterministic view-model states, not a screen grab of
+  chrome: replant the session from its input, replay its transcript
+  letter by letter through `dispatch`, and render each state's graph
+  through `renderGraph` (view-model only), ending on the accused state.
+- Rasterized frames quantize to ≤ 256 colors and encode through our own
+  GIF89a + LZW writer in `src/ui/gif.ts`. No runtime dependency.
+- Spoiler rule: the download name and the copyable result line never
+  contain the guilty SHA — the share-kit rule. The pixels show the lit
+  map, exactly like the win card already does.
+- The export never touches the clock, `src/core`, or `src/harness`.
+
+### Import a case (the real-git exception)
+
+- The one locked "fake git" exception, and it is narrow: a real-git
+  **importer** behind the existing fake-git session. Not a WASM libgit2,
+  not a rewrite of `src/core`. Why not WASM: a multi-megabyte runtime
+  dependency to read files a text parser can read; `docs/DEVIATIONS.md`
+  carries the paragraph.
+- Input: a user-supplied `git fast-export` file, chosen with a file
+  control on the desk. Parsed in the browser. No server, no auth,
+  nothing leaves the page.
+- The importer walks the commit records to the exported tip and takes
+  that chain, oldest first. A merge commit from disk is refused with
+  `GameError` (`INVALID_IMPORT`): DAGs stay generated, not imported.
+  This is the refuse-octopus-from-disk rule.
+- The chain must yield 2–64 suspects (known-good is the oldest commit).
+  Outside that it is refused. No coerce, no truncation.
+- Determinism: the seed is a deterministic FNV-1a hash of the export
+  bytes — same file, same dungeon. The generator plants synthetic trees
+  plus exactly one authored mutation from that seed. Real commit
+  subjects stay on the rooms; engine SHAs stay ours; the suite still
+  parses, never `eval`s.
+- Imported cases have no URL: no share link, no `t`, no door. `reset`
+  replants from the kept import. The win card and share kit work; the
+  result line names the case `Imported`.
+
+`INVALID_IMPORT` joins the `GameError` codes.
+
 ## Stack
 
 TypeScript (strict) + Vite + SVG or Canvas2D. No backend. `npm` is fine (single package). Live site later: GitHub Pages.
@@ -416,15 +566,17 @@ Mandatory style:
 
 The v2.0 section amends exactly two of these: **linear only** (the
 `merged` diamond, and nothing wilder) and **midpoint** (the DAG split
-rule, which reduces to the v1 rule on linear histories). Do not reopen
-the rest:
+rule, which reduces to the v1 rule on linear histories). The v2.1
+section amends exactly three: **fake git** (one narrow importer, not a
+rewrite), **linear only** (generated octopus DAGs), and **`checkout`
+stays reserved** (the row goes live). Do not reopen the rest:
 
-- Fake git, not real git
-- Linear only, except the single v2.0 diamond
+- Fake git, not real git — except the single v2.1 importer
+- Linear only — except the v2.0 diamond and generated v2.1 octopus DAGs; imports stay linear
 - `n` = suspect count
-- Midpoint = `floor((lo + hi) / 2)` on linear; the v2.0 max-min split on the diamond
-- One first-bad; failure persists in descendants (DAG ancestry in v2.0)
-- Work clock = marks from `score.ts`
+- Midpoint = `floor((lo + hi) / 2)` on linear; the v2.0 max-min split on any DAG
+- One first-bad; failure persists in descendants (DAG ancestry since v2.0)
+- Work clock = marks from `score.ts`; `checkout` is live at its reserved cost since v2.1
 - mulberry32, no `Math.random` / `Date.now` in core or harness
 - Renderer does not own the rules
 - No combat, inventory, LLM, backend, auth

@@ -292,3 +292,77 @@ Human-authorized 2026-08-18. Scope is the v2.0 section of [docs/design.md](docs/
   - [x] Unseen visitors are still routed to the tutorial first.
   - [x] e2e wins without importing mutations, driving the UI only.
   - [x] The win card stays 1200×630 with the guilty SHA lit; `save card` still downloads a PNG.
+
+## Phase 8 — v2.1
+
+Human-authorized 2026-08-18 by chat charter. Scope is the v2.1 section of [docs/design.md](docs/design.md): the old v-later list, unlocked. Never stays never: no backend, auth, LLM, inventory, combat. Ship in this order, one PR each.
+
+### TASK 26 — Checkout penalty move
+
+- **Status:** ⬜
+- **Deps:** TASK 21, TASK 23
+- **Deliverables:** Live `checkout <sha>` — one operand command in session dispatch at the reserved `costOf("checkout")` cost. It moves the lantern anywhere, including outside the suspect set. Map rooms are clickable to walk there. Desk copy for an out-of-range room. `t` stays `g`/`b`/`l` per the design amendment.
+- **Acceptance:**
+  - [ ] `dispatch(session, "checkout <sha>")` moves the checkout to any commit, inside or outside the suspect set, and increments the clock through `costOf("checkout")` only.
+  - [ ] An unknown SHA throws `GameError` (`INVALID_SHA`). No checkout changes the suspect set, the bounds, the status, or the ledger. `lastResult` becomes the new room's suite verdict.
+  - [ ] `good`/`bad` at a checked-out room inside the suspect set mark that room; outside it they throw `INVALID_MARK` and the desk disables them with `This room is outside the remaining range.`
+  - [ ] `t` stays `g`/`b`/`l`; a session that used checkout still shares an evidence-only transcript; replaying it restores the range and ledger with the penalty marks absent, as the design says.
+  - [ ] e2e: clicking a fogged room checks it out and the clock rises by the checkout cost; the search is still winnable afterward.
+
+### TASK 27 — Octopus + merge-base
+
+- **Status:** ⬜
+- **Deps:** TASK 22, TASK 23, TASK 24
+- **Deliverables:** Commits with any parent count in `src/core` (generated only). `mergeBase` puzzle primitive. Octopus generator: one root, `k >= 3` lanes, one join, one tail; known-good asserted as the merge-base of all lane tips. 200-octopus fuzz bar. Multi-lane renderer. Pinned `octopus` level ("The release train") per the v2.1 design table, with door and e2e.
+- **Acceptance:**
+  - [ ] SHAs hash every parent in order; linear and diamond histories keep byte-identical SHAs (existing fixtures unchanged).
+  - [ ] `mergeBase` returns the best common ancestors in `repo.order`: the older commit on a line, the fork point on the diamond, the root on the generated octopus.
+  - [ ] Exactly one first-bad; every other lane stays green; the join is red. An honest walk accuses the planted first-bad on 200 seeded octopus DAGs. The 200-linear and 200-diamond bars do not weaken.
+  - [ ] Renderer: one row per lane, corridors fork and meet, every commit keeps its `data-sha`, shape + label still carry the signal.
+  - [ ] `?l=octopus` parses and ignores `n`/`seed`; `?l=Octopus` throws `INVALID_URL`; unseen visitors still hit the tutorial first; e2e wins by marking what the room said, no mutation imports.
+
+### TASK 28 — Extra levels: friday + hotfix
+
+- **Status:** ⬜
+- **Deps:** TASK 27
+- **Deliverables:** The two remaining v2.1 design-table levels, exactly as pinned there: `friday` (The Friday deploy, linear n=64, first-bad 61, `sliceFencepost`) and `hotfix` (The hotfix, diamond n=16, trunk lane index 3, `brokenComparison`). Doors in the cabinet. Postmortem teach lines. Nothing else: no loot, no XP, no fourth tutorial.
+- **Acceptance:**
+  - [ ] `?l=friday` and `?l=hotfix` parse, ignore `n` and `seed`, and are case-sensitive (`?l=Friday` throws `INVALID_URL`).
+  - [ ] Both use the same clock and cost table; share links serialize their own level id, not seeded.
+  - [ ] Doors render in the cabinet; teach copy stays postmortem tone.
+  - [ ] Unseen visitors are still routed to the tutorial first.
+  - [ ] e2e: each new level is winnable by marking what the room said; no mutation imports.
+
+### TASK 29 — Sound latch
+
+- **Status:** ⬜
+- **Deps:** TASK 8
+- **Deliverables:** `src/ui/sound.ts`: Web Audio cues (good mark, bad mark, win, loss, reset) synthesized in code — no assets, no runtime dependency. Muted by default with one latch in the chrome (page memory, like help). `AudioContext` created on the unmute gesture only.
+- **Acceptance:**
+  - [ ] Muted by default; one latch toggles it; no sound plays before the unmute gesture (no autoplay surprise).
+  - [ ] Cues are synthesized; no asset files; no runtime dependency, so no `DEVIATIONS.md` entry needed.
+  - [ ] `src/core` and `src/harness` are untouched — still no `Date.now`/`Math.random` there; the latch never changes `marks`.
+  - [ ] The latch renders in the chrome and toggling it does not dispatch a command.
+
+### TASK 30 — GIF export
+
+- **Status:** ⬜
+- **Deps:** TASK 20, TASK 21
+- **Deliverables:** Win-only `save gif` control. Frames replayed deterministically from the session input + transcript through `dispatch`, rendered from view-models via `renderGraph`, quantized, and encoded by our own GIF89a + LZW writer in `src/ui/gif.ts`. No runtime dependency.
+- **Acceptance:**
+  - [ ] The control renders only on a win; the download is a `.gif` (e2e like the PNG card).
+  - [ ] Frames derive from replaying the input + transcript and rendering view-models — not a screen grab; same win, same frame sequence.
+  - [ ] The encoder is ours, unit-tested in Node on synthetic frames (valid GIF89a header, logical screen, trailer; LZW round-trips a known frame). No runtime dependency.
+  - [ ] Neither the download name nor the copyable result line contains the guilty SHA; the clock does not move; `src/core` and `src/harness` are untouched.
+
+### TASK 31 — Import a case
+
+- **Status:** ⬜
+- **Deps:** TASK 26, TASK 28
+- **Deliverables:** The narrow real-git exception per the v2.1 design section: a `git fast-export` importer in `src/harness` behind the existing fake-git session. File control on the desk. Merge commits and chains outside 2–64 suspects are refused. Seed is FNV-1a of the export bytes. One planted first-bad. `docs/DEVIATIONS.md` paragraph on why not WASM.
+- **Acceptance:**
+  - [ ] A fixture produced by real `git fast-export` (committed as text) parses: topology and subjects extracted, blob data blocks skipped by byte count.
+  - [ ] A merge commit from disk throws `GameError` (`INVALID_IMPORT`); chains yielding fewer than 2 or more than 64 suspects are refused; no coerce, no truncation.
+  - [ ] Same file → same dungeon: exactly one first-bad, honest walk wins, real subjects on the rooms, engine SHAs ours.
+  - [ ] Imported cases expose no share link and no `t`; `reset` replants from the kept import; the win card works; no server; no runtime dependency; the `DEVIATIONS.md` paragraph exists.
+  - [ ] e2e: choosing the fixture file on the desk starts the imported case and it is winnable by marking what the room said.
