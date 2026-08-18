@@ -38,7 +38,7 @@ function caseName(session: GameSession): string {
   if (isYesterdayInput(session.input)) {
     return "Yesterday";
   }
-  return "Seeded";
+  return session.input.suspectCount === 64 ? "Seeded 64" : "Seeded 32";
 }
 
 /**
@@ -103,7 +103,11 @@ function outcomeCopy(session: GameSession): string {
     return "Accused. That SHA was the first-bad.";
   }
   if (session.outcome === "lost") {
-    return "Accused. That SHA was not the first-bad.";
+    const accused = session.bisect.accused;
+    if (accused === null) {
+      return "Accused. That SHA was not the first-bad.";
+    }
+    return `Accused ${accused.slice(0, 7)}. That SHA was not the first-bad.`;
   }
   return "";
 }
@@ -115,6 +119,19 @@ function outcomeCopy(session: GameSession): string {
  */
 function nextSeed(seed: number): number {
   return (seed + 1) >>> 0;
+}
+
+/**
+ * One case door. `aria-current` marks the open file.
+ *
+ * @param href - Query
+ * @param label - Door copy
+ * @param current - This is the open case
+ */
+function doorLink(href: string, label: string, current: boolean): string {
+  const cls = current ? "door is-current" : "door";
+  const currentAttr = current ? " aria-current=\"page\"" : "";
+  return `<a class="${cls}" href="${href}"${currentAttr}>${label}</a>`;
 }
 
 /**
@@ -164,13 +181,17 @@ function caseDoors(session: GameSession): string {
   const n = session.input.suspectCount === 64 ? 64 : 32;
   const nxt = nextSeed(seed);
   const nextHref = `?l=seeded&n=${String(n)}&seed=${String(nxt)}`;
+  const tutorial = isTutorialInput(session.input);
+  const yesterday = isYesterdayInput(session.input);
+  const seeded32 = !tutorial && !yesterday && n === 32;
+  const seeded64 = !tutorial && !yesterday && n === 64;
   return [
     `<nav class="doors" aria-label="cases">`,
-    `<a class="door" href="?l=tutorial">Tutorial</a>`,
-    `<a class="door" href="?l=yesterday">Yesterday</a>`,
-    `<a class="door" href="?l=seeded&n=32&seed=${String(seed)}">Seeded 32</a>`,
-    `<a class="door" href="?l=seeded&n=64&seed=${String(seed)}">Seeded 64</a>`,
-    `<a class="door" href="${nextHref}">Next seed</a>`,
+    doorLink("?l=tutorial", "Tutorial", tutorial),
+    doorLink("?l=yesterday", "Yesterday", yesterday),
+    doorLink(`?l=seeded&n=32&seed=${String(seed)}`, "Seeded 32", seeded32),
+    doorLink(`?l=seeded&n=64&seed=${String(seed)}`, "Seeded 64", seeded64),
+    doorLink(nextHref, "Next seed", false),
     `</nav>`,
   ].join("");
 }
@@ -202,7 +223,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
       ].join("")
     : isYesterdayInput(session.input)
       ? `<div class="brief"><p class="teach">HEAD is red. It worked sixteen suspects back.</p></div>`
-      : "";
+      : `<div class="brief"><p class="teach">HEAD is red. ${String(session.input.suspectCount)} suspects. The seed is the case number.</p></div>`;
   const query = shareUrl(session);
   const share =
     !isTutorialInput(session.input) && !isYesterdayInput(session.input)
@@ -223,6 +244,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     teach,
     `<div class="hud">`,
     `<p class="marks">${String(session.marks)} / ${String(optimal)}</p>`,
+    session.marks > optimal ? `<p class="clock-note">Over the clock.</p>` : "",
     `<p class="seed">seed ${escapeHtml(String(session.input.seed))}</p>`,
     share,
     `</div>`,

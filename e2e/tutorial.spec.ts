@@ -48,6 +48,16 @@ test("wins the tutorial by marking what the room said", async ({ page }) => {
   expect(tutorialDone).toBe("1");
 });
 
+test("invalid seeded n is a postmortem after the tutorial", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("iwy.tutorialDone", "1");
+  });
+  await page.goto("/?l=seeded&n=31&seed=1729");
+  await expect(page.locator(".outcome")).toHaveText("Invalid URL. The share was not coerced.");
+  await expect(page.locator("#map")).toHaveCount(0);
+  await expect(page.locator(".room")).toContainText("32 or 64");
+});
+
 test("blame names the path and still lets the tutorial win", async ({ page }) => {
   await page.goto("/");
   const blame = page.locator("[data-command=\"blame\"]");

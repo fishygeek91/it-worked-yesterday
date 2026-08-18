@@ -122,7 +122,7 @@ Same seed → identical history, identical first-bad, identical trees, identical
 
 v1 does **not** encode the mark transcript. Reloading a mid-bisect URL restores the dungeon and the displayed clock, not the partial range. Full resume is v2.
 
-Invalid params throw `GameError` with code `INVALID_URL`. Do not coerce silently (no `n=31` → `32`).
+Invalid params throw `GameError` with code `INVALID_URL`. Do not coerce silently (no `n=31` → `32`). After the tutorial lock, the desk paints that error as a postmortem. It does not invent a dungeon.
 
 ## Determinism
 
