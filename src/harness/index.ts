@@ -2,6 +2,7 @@ export {
   createSession,
   dispatch,
   isDiamondInput,
+  isOctopusInput,
   type BlamePeek,
   type GameSession,
   type LedgerEntry,
@@ -11,6 +12,7 @@ export {
 } from "./session";
 export {
   isMergedInput,
+  isOctopusLevelInput,
   isTutorialDone,
   isTutorialInput,
   isYesterdayInput,
@@ -23,6 +25,7 @@ export {
 } from "./tutorial";
 export {
   MERGED_INPUT,
+  OCTOPUS_INPUT,
   parseUrl,
   seededInput,
   serializeUrl,

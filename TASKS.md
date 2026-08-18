@@ -311,15 +311,15 @@ Human-authorized 2026-08-18 by chat charter. Scope is the v2.1 section of [docs/
 
 ### TASK 27 — Octopus + merge-base
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 22, TASK 23, TASK 24
 - **Deliverables:** Commits with any parent count in `src/core` (generated only). `mergeBase` puzzle primitive. Octopus generator: one root, `k >= 3` lanes, one join, one tail; known-good asserted as the merge-base of all lane tips. 200-octopus fuzz bar. Multi-lane renderer. Pinned `octopus` level ("The release train") per the v2.1 design table, with door and e2e.
 - **Acceptance:**
-  - [ ] SHAs hash every parent in order; linear and diamond histories keep byte-identical SHAs (existing fixtures unchanged).
-  - [ ] `mergeBase` returns the best common ancestors in `repo.order`: the older commit on a line, the fork point on the diamond, the root on the generated octopus.
-  - [ ] Exactly one first-bad; every other lane stays green; the join is red. An honest walk accuses the planted first-bad on 200 seeded octopus DAGs. The 200-linear and 200-diamond bars do not weaken.
-  - [ ] Renderer: one row per lane, corridors fork and meet, every commit keeps its `data-sha`, shape + label still carry the signal.
-  - [ ] `?l=octopus` parses and ignores `n`/`seed`; `?l=Octopus` throws `INVALID_URL`; unseen visitors still hit the tutorial first; e2e wins by marking what the room said, no mutation imports.
+  - [x] SHAs hash every parent in order; linear and diamond histories keep byte-identical SHAs (existing fixtures unchanged).
+  - [x] `mergeBase` returns the best common ancestors in `repo.order`: the older commit on a line, the fork point on the diamond, the root on the generated octopus.
+  - [x] Exactly one first-bad; every other lane stays green; the join is red. An honest walk accuses the planted first-bad on 200 seeded octopus DAGs. The 200-linear and 200-diamond bars do not weaken.
+  - [x] Renderer: one row per lane, corridors fork and meet, every commit keeps its `data-sha`, shape + label still carry the signal.
+  - [x] `?l=octopus` parses and ignores `n`/`seed`; `?l=Octopus` throws `INVALID_URL`; unseen visitors still hit the tutorial first; e2e wins by marking what the room said, no mutation imports.
 
 ### TASK 28 — Extra levels: friday + hotfix
 

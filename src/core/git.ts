@@ -20,11 +20,11 @@ export type HistoryCommitSpec = {
 };
 
 /**
- * Content SHA for a commit. Linear (0 or 1 parent) keeps the v1 formula
- * so existing histories stay byte-identical. A merge hashes both parents
- * in order. Octopus is rejected here, not coerced into a pair.
+ * Content SHA for a commit. Every parent is hashed in order. The 0-, 1-,
+ * and 2-parent payloads are byte-identical to v1 and v2.0, so linear and
+ * diamond histories do not move. v2.1 allows any parent count (octopus).
  *
- * @param parents - Empty, one SHA, or two
+ * @param parents - Zero or more parent SHAs, in order
  * @param index - Position on `repo.order`
  * @param message - Commit message
  * @param tree - Virtual files
@@ -35,25 +35,15 @@ export function hashCommit(
   message: string,
   tree: Tree,
 ): Sha {
-  if (parents.length > 2) {
-    throw new GameError("INVALID_RANGE", "octopus merges are out");
-  }
   if (parents.length === 0) {
     return contentSha(["root", String(index), message, treePayload(tree)]);
   }
-  if (parents.length === 1) {
-    const only = parents[0];
-    if (only === undefined) {
+  for (const parent of parents) {
+    if (parent.length === 0) {
       throw new GameError("INVALID_SHA", "missing parent");
     }
-    return contentSha([only, String(index), message, treePayload(tree)]);
   }
-  const first = parents[0];
-  const second = parents[1];
-  if (first === undefined || second === undefined) {
-    throw new GameError("INVALID_SHA", "merge needs two parents");
-  }
-  return contentSha([first, second, String(index), message, treePayload(tree)]);
+  return contentSha([...parents, String(index), message, treePayload(tree)]);
 }
 
 /**
@@ -72,9 +62,6 @@ export function createHistory(specs: readonly HistoryCommitSpec[]): Repo {
     const spec = specs[i];
     if (spec === undefined) {
       throw new GameError("INVALID_INDEX", `missing spec at ${String(i)}`);
-    }
-    if (spec.parentIndices.length > 2) {
-      throw new GameError("INVALID_RANGE", "octopus merges are out");
     }
     const parents: Sha[] = [];
     for (const parentIndex of spec.parentIndices) {
@@ -231,6 +218,43 @@ export function ancestors(repo: Repo, sha: Sha): Sha[] {
     }
   }
   return repo.order.filter((id) => found.has(id));
+}
+
+/**
+ * Best common ancestors of `shas`, in `repo.order`. A puzzle primitive,
+ * not git-for-real: a common ancestor of every input that is not itself
+ * an ancestor of another common ancestor. No commit-date heuristics —
+ * `repo.order` is the only tiebreak. On a line, the merge-base of two
+ * commits is the older one. On the diamond, the merge-base of the lane
+ * tips is the fork point.
+ *
+ * @param repo - Current repo
+ * @param shas - One or more commits
+ */
+export function mergeBase(repo: Repo, shas: readonly Sha[]): Sha[] {
+  if (shas.length === 0) {
+    throw new GameError("INVALID_SHA", "merge-base needs at least one commit");
+  }
+  const first = shas[0];
+  if (first === undefined) {
+    throw new GameError("INVALID_SHA", "merge-base needs at least one commit");
+  }
+  let commonSet = new Set(ancestors(repo, first));
+  for (const sha of shas.slice(1)) {
+    const reachable = new Set(ancestors(repo, sha));
+    commonSet = new Set([...commonSet].filter((id) => reachable.has(id)));
+  }
+  // Drop every common ancestor that another common ancestor can reach:
+  // what remains cannot be improved on, so it is "best".
+  const shadowed = new Set<Sha>();
+  for (const candidate of commonSet) {
+    for (const ancestor of ancestors(repo, candidate)) {
+      if (ancestor !== candidate) {
+        shadowed.add(ancestor);
+      }
+    }
+  }
+  return repo.order.filter((id) => commonSet.has(id) && !shadowed.has(id));
 }
 
 /**

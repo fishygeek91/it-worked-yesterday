@@ -18,8 +18,9 @@ const TIGHT = 22;
 const EVEN_LAYOUT_MAX = 17;
 const ROOM_Y = 78;
 const BRANCH_Y = 138;
+const LANE_STEP = 60;
 const HEIGHT = 168;
-const DIAMOND_HEIGHT = 220;
+const LANE_FOOT = 82;
 
 type Point = {
   x: number;
@@ -225,8 +226,10 @@ function depthFromRoot(sha: string, parents: Map<string, string>): number {
 }
 
 /**
- * Room centers. Linear halls keep the single-row v1 layout. A diamond
- * puts the first-parent spine on the main row and the other lane below.
+ * Room centers. Linear halls keep the single-row v1 layout. A DAG puts
+ * the first-parent spine on the main row and every other lane on its own
+ * row below — one row for the diamond branch (byte-identical to v2.0),
+ * one per lane for the v2.1 octopus.
  *
  * @param vm - Renderer input
  */
@@ -245,28 +248,44 @@ function roomPoints(vm: ViewModel): { points: Point[]; height: number } {
   const spineLit = spine.map((sha) => litBySha.get(sha) === true);
   const spineXs = nodeXs(spine.length, spineLit);
   const at = new Map<string, Point>();
+  const spineSet = new Set<string>();
   for (let i = 0; i < spine.length; i += 1) {
     const sha = spine[i];
     const x = spineXs[i] ?? PAD_X;
     if (sha !== undefined) {
       at.set(sha, { x, y: ROOM_Y });
+      spineSet.add(sha);
     }
   }
   const parents = firstParents(vm);
+  // A lane starts where a first-parent chain leaves the spine. Walking
+  // vm.nodes in order keeps lane numbering stable for the same dungeon.
+  const laneOf = new Map<string, number>();
+  let laneCount = 0;
+  let maxY = BRANCH_Y;
   for (const node of vm.nodes) {
     if (at.has(node.sha)) {
       continue;
     }
+    const parent = parents.get(node.sha);
+    const parentLane = parent === undefined ? undefined : laneOf.get(parent);
+    const laneIndex =
+      parent !== undefined && !spineSet.has(parent) && parentLane !== undefined
+        ? parentLane
+        : laneCount++;
+    laneOf.set(node.sha, laneIndex);
     const depth = depthFromRoot(node.sha, parents);
     const spineSha = spine[depth];
     const spineAt = spineSha === undefined ? undefined : at.get(spineSha);
-    at.set(node.sha, { x: spineAt === undefined ? PAD_X : spineAt.x, y: BRANCH_Y });
+    const y = BRANCH_Y + LANE_STEP * laneIndex;
+    maxY = Math.max(maxY, y);
+    at.set(node.sha, { x: spineAt === undefined ? PAD_X : spineAt.x, y });
   }
   const points = vm.nodes.map((node) => {
     const found = at.get(node.sha);
     return found === undefined ? { x: PAD_X, y: ROOM_Y } : found;
   });
-  return { points, height: DIAMOND_HEIGHT };
+  return { points, height: maxY + LANE_FOOT };
 }
 
 /**
@@ -332,11 +351,12 @@ export function renderGraph(vm: ViewModel): string {
       bySha.set(node.sha, at);
     }
   }
+  const lowestRow = points.reduce((low, at) => Math.max(low, at.y), ROOM_Y);
   const washRect = rangeWash(
     points,
     vm.nodes.map((node) => node.lit),
     wash,
-    hasMerge(vm) ? { y: ROOM_Y - 36, height: BRANCH_Y - ROOM_Y + 72 } : undefined,
+    hasMerge(vm) ? { y: ROOM_Y - 36, height: lowestRow - ROOM_Y + 72 } : undefined,
   );
   const edges = vm.edges
     .map((edge) => {

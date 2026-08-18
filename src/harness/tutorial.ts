@@ -1,6 +1,13 @@
 import type { GameSession, SessionInput } from "./session";
-import { isDiamondInput } from "./session";
-import { MERGED_INPUT, parseUrl, sessionFromUrl, TUTORIAL_INPUT, YESTERDAY_INPUT } from "./url";
+import { isDiamondInput, isOctopusInput } from "./session";
+import {
+  MERGED_INPUT,
+  OCTOPUS_INPUT,
+  parseUrl,
+  sessionFromUrl,
+  TUTORIAL_INPUT,
+  YESTERDAY_INPUT,
+} from "./url";
 
 /**
  * Client persistence for tutorial completion. Not part of the seed.
@@ -39,7 +46,7 @@ export function markTutorialDone(store: TutorialStore): void {
  * @param input - Generate input
  */
 export function isTutorialInput(input: SessionInput): boolean {
-  if (isDiamondInput(input)) {
+  if (isDiamondInput(input) || isOctopusInput(input)) {
     return false;
   }
   return (
@@ -56,7 +63,7 @@ export function isTutorialInput(input: SessionInput): boolean {
  * @param input - Generate input
  */
 export function isYesterdayInput(input: SessionInput): boolean {
-  if (isDiamondInput(input)) {
+  if (isDiamondInput(input) || isOctopusInput(input)) {
     return false;
   }
   return (
@@ -80,6 +87,23 @@ export function isMergedInput(input: SessionInput): boolean {
     input.mutation === MERGED_INPUT.mutation &&
     input.firstBadLane === MERGED_INPUT.firstBadLane &&
     input.firstBadOnLane === MERGED_INPUT.firstBadOnLane
+  );
+}
+
+/**
+ * True when this session is the pinned release-train octopus.
+ *
+ * @param input - Session pin
+ */
+export function isOctopusLevelInput(input: SessionInput): boolean {
+  return (
+    isOctopusInput(input) &&
+    input.suspectCount === OCTOPUS_INPUT.suspectCount &&
+    input.laneCount === OCTOPUS_INPUT.laneCount &&
+    input.seed === OCTOPUS_INPUT.seed &&
+    input.mutation === OCTOPUS_INPUT.mutation &&
+    input.firstBadLane === OCTOPUS_INPUT.firstBadLane &&
+    input.firstBadOnLane === OCTOPUS_INPUT.firstBadOnLane
   );
 }
 

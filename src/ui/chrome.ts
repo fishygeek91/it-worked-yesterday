@@ -3,7 +3,12 @@ import { firstChangedFile } from "../core/diff";
 import { commitAt } from "../core/git";
 import { costOf, optimalMarks } from "../core/score";
 import type { GameSession, SessionCommand } from "../harness/session";
-import { isMergedInput, isTutorialInput, isYesterdayInput } from "../harness/tutorial";
+import {
+  isMergedInput,
+  isOctopusLevelInput,
+  isTutorialInput,
+  isYesterdayInput,
+} from "../harness/tutorial";
 import { shareUrl } from "../harness/url";
 
 /**
@@ -43,6 +48,9 @@ export function caseName(session: GameSession): string {
   }
   if (isMergedInput(session.input)) {
     return "The feature branch";
+  }
+  if (isOctopusLevelInput(session.input)) {
+    return "The release train";
   }
   return session.input.suspectCount === 64 ? "Seeded 64" : "Seeded 32";
 }
@@ -175,7 +183,15 @@ function doorLink(href: string, label: string, current: boolean): string {
 /**
  * Which door is the open case file. `none` for the invalid-share desk.
  */
-export type OpenCase = "tutorial" | "yesterday" | "merged" | "seeded32" | "seeded64" | "learn" | "none";
+export type OpenCase =
+  | "tutorial"
+  | "yesterday"
+  | "merged"
+  | "octopus"
+  | "seeded32"
+  | "seeded64"
+  | "learn"
+  | "none";
 
 /**
  * Doors into the case files. One cabinet shared by the play desk, the learn
@@ -194,6 +210,7 @@ export function renderDoors(options: {
     doorLink("?l=tutorial", "Tutorial", current === "tutorial"),
     doorLink("?l=yesterday", "Yesterday", current === "yesterday"),
     doorLink("?l=merged", "The feature branch", current === "merged"),
+    doorLink("?l=octopus", "The release train", current === "octopus"),
     doorLink("?l=learn", "Learn", current === "learn"),
     doorLink(`?l=seeded&n=32&seed=${String(seed)}`, "Seeded 32", current === "seeded32"),
     doorLink(`?l=seeded&n=64&seed=${String(seed)}`, "Seeded 64", current === "seeded64"),
@@ -256,15 +273,18 @@ function caseDoors(session: GameSession): string {
   const tutorial = isTutorialInput(session.input);
   const yesterday = isYesterdayInput(session.input);
   const merged = isMergedInput(session.input);
+  const octopus = isOctopusLevelInput(session.input);
   const current: OpenCase = tutorial
     ? "tutorial"
     : yesterday
       ? "yesterday"
       : merged
         ? "merged"
-        : n === 64
-          ? "seeded64"
-          : "seeded32";
+        : octopus
+          ? "octopus"
+          : n === 64
+            ? "seeded64"
+            : "seeded32";
   return renderDoors({ current, seed, next: { n, seed: nextSeed(seed) } });
 }
 
@@ -304,12 +324,20 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
             `<p class="teach">The rot came in on one lane.</p>`,
             `</div>`,
           ].join("")
-        : `<div class="brief"><p class="teach">HEAD is red. ${String(session.input.suspectCount)} suspects. The seed is the case number.</p></div>`;
+        : isOctopusLevelInput(session.input)
+          ? [
+              `<div class="brief">`,
+              `<p class="teach">HEAD is red. Three branches merged in one commit.</p>`,
+              `<p class="teach">One of them brought the rot to the join.</p>`,
+              `</div>`,
+            ].join("")
+          : `<div class="brief"><p class="teach">HEAD is red. ${String(session.input.suspectCount)} suspects. The seed is the case number.</p></div>`;
   const query = shareUrl(session);
   const share =
     !isTutorialInput(session.input) &&
     !isYesterdayInput(session.input) &&
-    !isMergedInput(session.input)
+    !isMergedInput(session.input) &&
+    !isOctopusLevelInput(session.input)
       ? `<p class="share">${escapeHtml(query)}</p><button type="button" class="copy" data-copy="${escapeHtml(query)}">copy</button>`
       : "";
   const doors = visit !== undefined && visit.tutorialDone ? caseDoors(session) : "";
@@ -357,7 +385,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
       ? `<p class="ready">One SHA remains. Accuse it.</p>`
       : "",
     `<div class="meter" aria-hidden="true"><span style="width:${String(meterPct)}%"></span></div>`,
-    isMergedInput(session.input)
+    isMergedInput(session.input) || isOctopusLevelInput(session.input)
       ? `<p class="fairness">The clock is marks, not wall time. Optimal is a line count. A merge can miss it by a step.</p>`
       : `<p class="fairness">The clock is marks, not wall time. The suite does not mark for you.</p>`,
     outcomeBlock,

@@ -89,7 +89,7 @@ describe("fake git", () => {
     }
   });
 
-  it("hashes both merge parents in order and rejects octopus", () => {
+  it("hashes every merge parent in order; octopus is legal since v2.1", () => {
     const root = { message: "root", tree: goodTree("a"), parentIndices: [] as const };
     const trunk = { message: "trunk", tree: goodTree("b"), parentIndices: [0] as const };
     const branch = { message: "branch", tree: goodTree("c"), parentIndices: [0] as const };
@@ -107,15 +107,21 @@ describe("fake git", () => {
     expect(commit.parents).toEqual([repo.order[1], repo.order[2]]);
     expect(commit.sha).toBe(hashCommit(commit.parents, 3, commit.message, commit.tree));
     expect(createHistory([root, trunk, branch, merge]).order).toEqual(repo.order);
-    expect(() => {
-      createHistory([
-        root,
-        trunk,
-        branch,
-        { message: "third", tree: goodTree("e"), parentIndices: [0] },
-        { message: "octopus", tree: goodTree("f"), parentIndices: [1, 2, 3] },
-      ]);
-    }).toThrow(GameError);
+    // v2.1: a generated octopus join is legal and deterministic.
+    const withOctopus = createHistory([
+      root,
+      trunk,
+      branch,
+      { message: "third", tree: goodTree("e"), parentIndices: [0] },
+      { message: "octopus", tree: goodTree("f"), parentIndices: [1, 2, 3] },
+    ]);
+    const octopusSha = withOctopus.order[4];
+    if (octopusSha === undefined) {
+      throw new Error("missing octopus join");
+    }
+    const join = commitAt(withOctopus, octopusSha);
+    expect(join.parents).toHaveLength(3);
+    expect(join.sha).toBe(hashCommit(join.parents, 4, join.message, join.tree));
   });
 
   it("walks DAG ancestors and descendants in repo.order", () => {

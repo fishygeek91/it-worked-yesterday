@@ -14,7 +14,13 @@ export {
 } from "./bugs";
 export { firstChangedFile, type DiffLine, type FileDiff } from "./diff";
 export { GameError, type GameErrorCode } from "./errors";
-export { diamondLayout, generateBuggyHistory, generateDiamondHistory } from "./generate";
+export {
+  diamondLayout,
+  generateBuggyHistory,
+  generateDiamondHistory,
+  generateOctopusHistory,
+  octopusLayout,
+} from "./generate";
 export {
   ancestors,
   checkout,
@@ -25,6 +31,7 @@ export {
   hashCommit,
   indexOfSha,
   log,
+  mergeBase,
   shaAt,
   type HistoryCommitSpec,
   type LinearCommitSpec,
@@ -62,6 +69,8 @@ export type {
   GeneratedHistory,
   GenerateInput,
   MutationId,
+  OctopusGenerateInput,
+  OctopusLayout,
   Repo,
   Sha,
   SuiteResult,

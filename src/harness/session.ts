@@ -7,6 +7,7 @@ import {
   GameError,
   generateBuggyHistory,
   generateDiamondHistory,
+  generateOctopusHistory,
   mark,
   runSuite,
   start,
@@ -16,13 +17,24 @@ import type {
   DiamondGenerateInput,
   GeneratedHistory,
   GenerateInput,
+  OctopusGenerateInput,
   SuiteResult,
 } from "../core";
 
 /**
- * Plant pin. Linear levels use `GenerateInput`; the diamond uses the v2.0 pin.
+ * Plant pin. Linear levels use `GenerateInput`; the diamond uses the
+ * v2.0 pin; the octopus uses the v2.1 pin.
  */
-export type SessionInput = GenerateInput | DiamondGenerateInput;
+export type SessionInput = GenerateInput | DiamondGenerateInput | OctopusGenerateInput;
+
+/**
+ * True when this pin plants the v2.1 octopus.
+ *
+ * @param input - Session pin
+ */
+export function isOctopusInput(input: SessionInput): input is OctopusGenerateInput {
+  return "laneCount" in input;
+}
 
 /**
  * True when this pin plants the one diamond.
@@ -30,7 +42,7 @@ export type SessionInput = GenerateInput | DiamondGenerateInput;
  * @param input - Session pin
  */
 export function isDiamondInput(input: SessionInput): input is DiamondGenerateInput {
-  return "firstBadLane" in input;
+  return !isOctopusInput(input) && "firstBadLane" in input;
 }
 
 /**
@@ -148,7 +160,11 @@ function dispatchCheckout(session: GameSession, sha: string): GameSession {
  * @param input - Linear pin or the v2.0 diamond pin
  */
 export function createSession(input: SessionInput): GameSession {
-  const generated = isDiamondInput(input) ? generateDiamondHistory(input) : generateBuggyHistory(input);
+  const generated = isOctopusInput(input)
+    ? generateOctopusHistory(input)
+    : isDiamondInput(input)
+      ? generateDiamondHistory(input)
+      : generateBuggyHistory(input);
   const bisect = start(generated.repo, generated.knownGood, generated.knownBad);
   return {
     input,
