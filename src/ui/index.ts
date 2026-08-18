@@ -1,2 +1,2 @@
-export { renderChrome } from "./chrome";
+export { renderChrome, type ChromeVisit } from "./chrome";
 export { renderWinCard } from "./winCard";
