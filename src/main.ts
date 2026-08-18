@@ -3,6 +3,7 @@ import {
   isTutorialInput,
   markTutorialDone,
   sessionForVisit,
+  type SessionCommand,
   type TutorialStore,
 } from "./harness";
 import { buildViewModel, renderGraph } from "./render";
@@ -25,14 +26,57 @@ const store: TutorialStore = {
 let session = sessionForVisit(window.location.search, store);
 
 /**
- * Paint chrome and the dungeon map from the current session.
+ * Map a key to a v1 command. Letters only; no modifiers.
+ *
+ * @param key - event.key
+ */
+function commandFromKey(key: string): SessionCommand | null {
+  const letter = key.length === 1 ? key.toLowerCase() : key;
+  if (letter === "g") {
+    return "good";
+  }
+  if (letter === "b") {
+    return "bad";
+  }
+  if (letter === "a") {
+    return "accuse";
+  }
+  if (letter === "r") {
+    return "reset";
+  }
+  return null;
+}
+
+/**
+ * Run one command, persist a tutorial win, and repaint.
+ *
+ * @param command - v1 command name
+ */
+function applyCommand(command: string): void {
+  session = dispatch(session, command);
+  if (session.outcome === "won" && isTutorialInput(session.input)) {
+    markTutorialDone(store);
+  }
+  paint();
+}
+
+/**
+ * Paint the dungeon first, then the desk. Win card last.
  */
 function paint(): void {
-  const parts = [renderChrome(session), renderGraph(buildViewModel(session))];
+  document.documentElement.dataset.outcome = session.outcome;
+  const parts = [
+    `<div id="map">${renderGraph(buildViewModel(session))}</div>`,
+    renderChrome(session),
+  ];
   if (session.outcome === "won") {
     parts.push(renderWinCard(session));
   }
   app.innerHTML = parts.join("");
+  const head = app.querySelector("[data-label=\"HEAD\"]");
+  if (head instanceof Element) {
+    head.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
+  }
 }
 
 app.addEventListener("click", (event: Event) => {
@@ -48,11 +92,23 @@ app.addEventListener("click", (event: Event) => {
   if (command === null) {
     return;
   }
-  session = dispatch(session, command);
-  if (session.outcome === "won" && isTutorialInput(session.input)) {
-    markTutorialDone(store);
+  applyCommand(command);
+});
+
+window.addEventListener("keydown", (event: KeyboardEvent) => {
+  if (event.metaKey || event.ctrlKey || event.altKey) {
+    return;
   }
-  paint();
+  const command = commandFromKey(event.key);
+  if (command === null) {
+    return;
+  }
+  const button = app.querySelector(`[data-command="${command}"]`);
+  if (!(button instanceof HTMLButtonElement) || button.disabled) {
+    return;
+  }
+  event.preventDefault();
+  applyCommand(command);
 });
 
 paint();
