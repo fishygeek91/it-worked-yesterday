@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { GenerateInput } from "../src/core/types";
-import { createSession } from "../src/harness";
+import { createSession, seededInput } from "../src/harness";
 import { buildViewModel, GRAPH_PAINT, renderGraph } from "../src/render";
 
 const TUTORIAL: GenerateInput = {
@@ -52,6 +52,23 @@ describe("renderGraph", () => {
     expect(interior).toMatchObject({ shape: "fog", label: "fog", lit: true });
     expect(midpoint).toMatchObject({ shape: "lantern", label: "HEAD", lit: true });
     expect(newest).toMatchObject({ shape: "rot", label: "rot", lit: true });
+  });
+
+  it("keeps every seeded-32 room and compresses the fogged wings", () => {
+    const session = createSession(seededInput(32, 1729));
+    const vm = buildViewModel(session);
+    const svg = renderGraph(vm);
+    expect(vm.nodes).toHaveLength(33);
+    for (const node of vm.nodes) {
+      expect(svg).toContain(
+        `data-shape="${node.shape}" data-label="${node.label}" data-lit="${node.lit ? "true" : "false"}" data-sha="${node.sha}"`,
+      );
+    }
+    const box = svg.match(/viewBox="0 0 (\d+(?:\.\d+)?) /);
+    const width = box === null ? Number.NaN : Number(box[1]);
+    const evenWidth = 48 * 2 + 32 * 72;
+    expect(width).toBeLessThan(evenWidth);
+    expect(width).toBeGreaterThan(48 * 2);
   });
 });
 

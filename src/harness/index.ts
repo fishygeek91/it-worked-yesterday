@@ -1,6 +1,7 @@
 export {
   createSession,
   dispatch,
+  type BlamePeek,
   type GameSession,
   type SessionCommand,
   type SessionOutcome,

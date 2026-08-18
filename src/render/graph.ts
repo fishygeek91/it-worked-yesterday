@@ -14,6 +14,8 @@ export const GRAPH_PAINT = {
 
 const PAD_X = 48;
 const STEP = 72;
+const TIGHT = 22;
+const EVEN_LAYOUT_MAX = 17;
 const ROOM_Y = 78;
 const HEIGHT = 168;
 
@@ -96,6 +98,45 @@ function roomGeometry(node: ViewNode, at: Point, fill: string, rim: string): str
 }
 
 /**
+ * Horizontal x for each room. Long halls tighten fogged wings so the
+ * remaining range still reads as a walkable hallway.
+ *
+ * @param count - Room count
+ * @param lit - Parallel lit flags
+ */
+/**
+ * Wide gap for the remaining range. Tutorial and Yesterday keep the v1 step.
+ */
+function hallStep(count: number): number {
+  if (count <= EVEN_LAYOUT_MAX) {
+    return STEP;
+  }
+  if (count <= 33) {
+    return 52;
+  }
+  return 40;
+}
+
+function nodeXs(count: number, lit: readonly boolean[]): number[] {
+  if (count <= EVEN_LAYOUT_MAX) {
+    return Array.from({ length: count }, (_, index) => PAD_X + index * STEP);
+  }
+  const wide = hallStep(count);
+  const xs: number[] = [];
+  let x = PAD_X;
+  for (let index = 0; index < count; index += 1) {
+    xs.push(x);
+    if (index === count - 1) {
+      break;
+    }
+    const thisLit = lit[index] === true;
+    const nextLit = lit[index + 1] === true;
+    x += thisLit || nextLit ? wide : TIGHT;
+  }
+  return xs;
+}
+
+/**
  * One corridor between parent and child.
  *
  * @param from - Parent
@@ -143,7 +184,10 @@ function rangeWash(points: Point[], lit: boolean[], wash: string): string {
  */
 export function renderGraph(vm: ViewModel): string {
   const count = vm.nodes.length;
-  const width = Math.max(PAD_X * 2, PAD_X * 2 + Math.max(0, count - 1) * STEP);
+  const lit = vm.nodes.map((node) => node.lit);
+  const xs = nodeXs(count, lit);
+  const lastX = xs.length === 0 ? PAD_X : (xs[xs.length - 1] ?? PAD_X);
+  const width = Math.max(PAD_X * 2, lastX + PAD_X);
   const good = paintFor(vm.colors.good);
   const bad = paintFor(vm.colors.bad);
   const unknown = paintFor(vm.colors.unknown);
@@ -153,7 +197,8 @@ export function renderGraph(vm: ViewModel): string {
   const bySha = new Map<string, Point>();
   for (let i = 0; i < count; i += 1) {
     const node = vm.nodes[i];
-    const at = { x: PAD_X + i * STEP, y: ROOM_Y };
+    const x = xs[i] ?? PAD_X;
+    const at = { x, y: ROOM_Y };
     points.push(at);
     if (node !== undefined) {
       bySha.set(node.sha, at);
@@ -184,14 +229,20 @@ export function renderGraph(vm: ViewModel): string {
         node.shape === "lamp" ? good : node.shape === "rot" ? bad : node.shape === "fog" ? unknown : rim;
       const opacity = node.lit ? "1" : "0.32";
       const short = node.sha.slice(0, 7);
+      const showLabel = node.lit || i === 0 || i === count - 1 || node.shape === "lantern";
+      const labelText = showLabel
+        ? `<text x="${String(at.x)}" y="${String(at.y + 34)}" text-anchor="middle" fill="#e8e2d6" font-size="11" font-family="IBM Plex Mono, ui-monospace, monospace">${escapeXml(node.label)}</text>`
+        : "";
+      const shaText =
+        node.shape === "lantern"
+          ? `<text x="${String(at.x)}" y="${String(at.y + 50)}" text-anchor="middle" fill="#b7b1a4" font-size="9" font-family="IBM Plex Mono, ui-monospace, monospace">${escapeXml(short)}</text>`
+          : "";
       return [
         `<g data-shape="${escapeXml(node.shape)}" data-label="${escapeXml(node.label)}" data-lit="${node.lit ? "true" : "false"}" data-sha="${escapeXml(node.sha)}" opacity="${opacity}">`,
         `<title>${escapeXml(node.sha)} — ${escapeXml(node.message)}</title>`,
         roomGeometry(node, at, fill, rim),
-        `<text x="${String(at.x)}" y="${String(at.y + 34)}" text-anchor="middle" fill="#e8e2d6" font-size="11" font-family="IBM Plex Mono, ui-monospace, monospace">${escapeXml(node.label)}</text>`,
-        node.shape === "lantern"
-          ? `<text x="${String(at.x)}" y="${String(at.y + 50)}" text-anchor="middle" fill="#b7b1a4" font-size="9" font-family="IBM Plex Mono, ui-monospace, monospace">${escapeXml(short)}</text>`
-          : "",
+        labelText,
+        shaText,
         "</g>",
       ].join("");
     })

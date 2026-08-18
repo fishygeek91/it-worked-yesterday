@@ -3,7 +3,7 @@ import type { CommandName } from "./types";
 
 /**
  * Single source of mark costs. Call sites must use `costOf`.
- * `blame` and `checkout` are reserved for v1.1. Do not change without a human.
+ * `blame` is the live v1.1 peek. `checkout` stays reserved. Do not change costs without a human.
  */
 export const COMMAND_COSTS = {
   good: 1,

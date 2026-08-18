@@ -47,3 +47,24 @@ test("wins the tutorial by marking what the room said", async ({ page }) => {
   const tutorialDone = await page.evaluate(() => window.localStorage.getItem("iwy.tutorialDone"));
   expect(tutorialDone).toBe("1");
 });
+
+test("blame names the path and still lets the tutorial win", async ({ page }) => {
+  await page.goto("/");
+  const blame = page.locator("[data-command=\"blame\"]");
+  await expect(blame).toBeEnabled();
+  await blame.click();
+  await expect(page.locator(".peek")).toHaveText("Peek: src/collect.ts");
+  await expect(page.locator(".marks")).toHaveText("2 / 3");
+
+  const accuse = page.locator("[data-command=\"accuse\"]");
+  for (let step = 0; step < 8; step += 1) {
+    if (await accuse.isEnabled()) {
+      break;
+    }
+    await markWhatTheRoomSaid(page);
+  }
+  await expect(accuse).toBeEnabled();
+  await accuse.click();
+  await expect(page.locator(".outcome")).toHaveText("Accused. That SHA was the first-bad.");
+  await expect(page.locator(".win-marks")).toHaveText("5 / 3");
+});
