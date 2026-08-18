@@ -1,6 +1,9 @@
 import { GameError } from "./core/errors";
 import {
+  createSession,
   dispatch,
+  importCase,
+  isImportInput,
   isTutorialDone,
   isTutorialInput,
   markTutorialDone,
@@ -94,6 +97,11 @@ let soundOn = false;
 let audio: AudioContext | null = null;
 
 /**
+ * Postmortem line for the last refused import. Page memory only.
+ */
+let importNote: string | null = null;
+
+/**
  * Map a key to a session command. Letters only; no modifiers.
  *
  * @param key - event.key
@@ -168,7 +176,12 @@ function paint(): void {
   }
   const parts = [
     `<div id="map">${renderGraph(buildViewModel(session))}</div>`,
-    renderChrome(session, { tutorialDone: isTutorialDone(store), helpOpen, soundOn }),
+    renderChrome(session, {
+      tutorialDone: isTutorialDone(store),
+      helpOpen,
+      soundOn,
+      importNote: importNote ?? undefined,
+    }),
   ];
   if (session.outcome === "won") {
     parts.push(renderWinCard(session));
@@ -339,7 +352,10 @@ app.addEventListener("click", (event: Event) => {
   const shareResult = target.closest("[data-share-result]");
   if (shareResult instanceof HTMLElement) {
     if (boot.kind === "play" && boot.session.outcome === "won") {
-      const text = `${shareText(boot.session)}\n${shareLink(boot.session)}`;
+      // Imported cases have no URL, so the result line travels alone.
+      const text = isImportInput(boot.session.input)
+        ? shareText(boot.session)
+        : `${shareText(boot.session)}\n${shareLink(boot.session)}`;
       if (navigator.clipboard !== undefined) {
         void navigator.clipboard.writeText(text);
       }
@@ -414,6 +430,41 @@ app.addEventListener("click", (event: Event) => {
     return;
   }
   applyCommand(command);
+});
+
+/**
+ * Start the chosen fast-export file as an imported case, or keep the
+ * refusal as a postmortem line on the desk. Parsed here in the browser;
+ * nothing leaves the page.
+ *
+ * @param file - The chosen export file
+ */
+async function startImport(file: File): Promise<void> {
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const input = importCase(bytes);
+    boot = { kind: "play", session: createSession(input) };
+    importNote = null;
+  } catch (error) {
+    if (error instanceof GameError) {
+      importNote = error.message;
+    } else {
+      importNote = "that file could not be read";
+    }
+  }
+  paint();
+}
+
+app.addEventListener("change", (event: Event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement) || target.getAttribute("data-import") === null) {
+    return;
+  }
+  const file = target.files === null ? undefined : target.files[0];
+  if (file === undefined) {
+    return;
+  }
+  void startImport(file);
 });
 
 window.addEventListener("keydown", (event: KeyboardEvent) => {

@@ -20,12 +20,27 @@ import type {
   OctopusGenerateInput,
   SuiteResult,
 } from "../core";
+import { generateImportedHistory, type ImportInput } from "./importCase";
 
 /**
  * Plant pin. Linear levels use `GenerateInput`; the diamond uses the
- * v2.0 pin; the octopus uses the v2.1 pin.
+ * v2.0 pin; the octopus uses the v2.1 pin; an imported case keeps its
+ * fast-export subjects alongside the seeded plant.
  */
-export type SessionInput = GenerateInput | DiamondGenerateInput | OctopusGenerateInput;
+export type SessionInput =
+  | GenerateInput
+  | DiamondGenerateInput
+  | OctopusGenerateInput
+  | ImportInput;
+
+/**
+ * True when this pin is a kept fast-export import.
+ *
+ * @param input - Session pin
+ */
+export function isImportInput(input: SessionInput): input is ImportInput {
+  return "subjects" in input;
+}
 
 /**
  * True when this pin plants the v2.1 octopus.
@@ -160,11 +175,13 @@ function dispatchCheckout(session: GameSession, sha: string): GameSession {
  * @param input - Linear pin or the v2.0 diamond pin
  */
 export function createSession(input: SessionInput): GameSession {
-  const generated = isOctopusInput(input)
-    ? generateOctopusHistory(input)
-    : isDiamondInput(input)
-      ? generateDiamondHistory(input)
-      : generateBuggyHistory(input);
+  const generated = isImportInput(input)
+    ? generateImportedHistory(input)
+    : isOctopusInput(input)
+      ? generateOctopusHistory(input)
+      : isDiamondInput(input)
+        ? generateDiamondHistory(input)
+        : generateBuggyHistory(input);
   const bisect = start(generated.repo, generated.knownGood, generated.knownBad);
   return {
     input,

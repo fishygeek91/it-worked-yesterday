@@ -2,7 +2,7 @@ import { midpoint } from "../core/bisect";
 import { firstChangedFile } from "../core/diff";
 import { commitAt } from "../core/git";
 import { costOf, optimalMarks } from "../core/score";
-import type { GameSession, SessionCommand } from "../harness/session";
+import { isImportInput, type GameSession, type SessionCommand } from "../harness/session";
 import {
   isFridayInput,
   isHotfixInput,
@@ -21,6 +21,8 @@ export type ChromeVisit = {
   tutorialDone: boolean;
   helpOpen?: boolean;
   soundOn?: boolean;
+  /** Postmortem line for the last refused import, if any. */
+  importNote?: string;
 };
 
 /**
@@ -61,6 +63,9 @@ export function caseName(session: GameSession): string {
   }
   if (isHotfixInput(session.input)) {
     return "The hotfix";
+  }
+  if (isImportInput(session.input)) {
+    return "Imported";
   }
   return session.input.suspectCount === 64 ? "Seeded 64" : "Seeded 32";
 }
@@ -284,6 +289,7 @@ export function winExhibit(session: GameSession): string {
 function caseDoors(session: GameSession): string {
   const seed = session.input.seed;
   const n = session.input.suspectCount === 64 ? 64 : 32;
+  // An imported case has no door: the cabinet stays, nothing is current.
   const current: OpenCase = isTutorialInput(session.input)
     ? "tutorial"
     : isYesterdayInput(session.input)
@@ -296,9 +302,11 @@ function caseDoors(session: GameSession): string {
             ? "friday"
             : isHotfixInput(session.input)
               ? "hotfix"
-              : n === 64
-                ? "seeded64"
-                : "seeded32";
+              : isImportInput(session.input)
+                ? "none"
+                : n === 64
+                  ? "seeded64"
+                  : "seeded32";
   return renderDoors({ current, seed, next: { n, seed: nextSeed(seed) } });
 }
 
@@ -353,6 +361,14 @@ function teachCopy(session: GameSession): string {
       `</div>`,
     ].join("");
   }
+  if (isImportInput(session.input)) {
+    return [
+      `<div class="brief">`,
+      `<p class="teach">HEAD is red. ${String(session.input.suspectCount)} suspects came in from another repo.</p>`,
+      `<p class="teach">The subjects are real. The rot is planted. Same file, same case.</p>`,
+      `</div>`,
+    ].join("");
+  }
   return `<div class="brief"><p class="teach">HEAD is red. ${String(session.input.suspectCount)} suspects. The seed is the case number.</p></div>`;
 }
 
@@ -376,17 +392,34 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
   const outcome = outcomeCopy(session);
   const outcomeBlock = outcome === "" ? "" : `<p class="outcome">${outcome}</p>`;
   const teach = teachCopy(session);
-  const query = shareUrl(session);
-  const share =
+  // Only the seeded desk shows a share query. Imported cases have no
+  // URL at all, so `shareUrl` is never asked for one.
+  const shareable =
+    !isImportInput(session.input) &&
     !isTutorialInput(session.input) &&
     !isYesterdayInput(session.input) &&
     !isMergedInput(session.input) &&
     !isOctopusLevelInput(session.input) &&
     !isFridayInput(session.input) &&
-    !isHotfixInput(session.input)
-      ? `<p class="share">${escapeHtml(query)}</p><button type="button" class="copy" data-copy="${escapeHtml(query)}">copy</button>`
-      : "";
+    !isHotfixInput(session.input);
+  const query = shareable ? shareUrl(session) : "";
+  const share = shareable
+    ? `<p class="share">${escapeHtml(query)}</p><button type="button" class="copy" data-copy="${escapeHtml(query)}">copy</button>`
+    : "";
   const doors = visit !== undefined && visit.tutorialDone ? caseDoors(session) : "";
+  // The v2.1 real-git exception: a file control on the desk. Parsed in
+  // the browser; nothing leaves the page. Not a command — no cost.
+  const importControl =
+    visit !== undefined && visit.tutorialDone
+      ? [
+          `<label class="import">import a case (a real git history file)`,
+          `<input type="file" data-import />`,
+          `</label>`,
+          visit.importNote !== undefined && visit.importNote !== ""
+            ? `<p class="import-note">${escapeHtml(visit.importNote)}</p>`
+            : "",
+        ].join("")
+      : "";
   const exhibit = winExhibit(session);
   // Share kit is win-only. Neither control is a command: no dispatch, no cost.
   const sharekit =
@@ -417,6 +450,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     share,
     `</div>`,
     doors,
+    importControl,
     `<div class="desk">`,
     `<p class="checkout"><button type="button" class="sha" data-copy="${escapeHtml(current.sha)}">${escapeHtml(shortSha)}</button> ${escapeHtml(current.message)}</p>`,
     `<p class="room" data-tone="${roomTone}">${roomCopy(session)}</p>`,

@@ -12,6 +12,7 @@ export type GameErrorCode =
   | "EMPTY_REPO"
   | "INVALID_INDEX"
   | "INVALID_URL"
+  | "INVALID_IMPORT"
   | "MISSING_FILE"
   | "MUTATION_SITE";
 

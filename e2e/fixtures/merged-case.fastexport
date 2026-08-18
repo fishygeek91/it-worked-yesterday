@@ -1,0 +1,58 @@
+blob
+mark :1
+data 4
+one
+
+reset refs/heads/feature
+commit refs/heads/feature
+mark :2
+author Case Author <case@example.com> 1786698000 +0000
+committer Case Author <case@example.com> 1786698000 +0000
+data 65
+start the trunk
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+M 100644 :1 a.txt
+
+blob
+mark :3
+data 6
+three
+
+commit refs/heads/main
+mark :4
+author Case Author <case@example.com> 1786698000 +0000
+committer Case Author <case@example.com> 1786698000 +0000
+data 64
+grow the trunk
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+from :2
+M 100644 :3 c.txt
+
+blob
+mark :5
+data 4
+two
+
+commit refs/heads/feature
+mark :6
+author Case Author <case@example.com> 1786698000 +0000
+committer Case Author <case@example.com> 1786698000 +0000
+data 66
+grow the feature
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+from :2
+M 100644 :5 b.txt
+
+commit refs/heads/main
+mark :7
+author Case Author <case@example.com> 1786698000 +0000
+committer Case Author <case@example.com> 1786698000 +0000
+data 15
+join the lanes
+from :4
+merge :6
+M 100644 :5 b.txt
+
