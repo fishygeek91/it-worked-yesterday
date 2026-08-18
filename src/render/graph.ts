@@ -17,7 +17,9 @@ const STEP = 72;
 const TIGHT = 22;
 const EVEN_LAYOUT_MAX = 17;
 const ROOM_Y = 78;
+const BRANCH_Y = 138;
 const HEIGHT = 168;
+const DIAMOND_HEIGHT = 220;
 
 type Point = {
   x: number;
@@ -147,13 +149,140 @@ function corridor(from: Point, to: Point): string {
 }
 
 /**
+ * True when some room has two parents. Linear halls never take this path,
+ * so their SVG stays the v1 layout.
+ *
+ * @param vm - Renderer input
+ */
+function hasMerge(vm: ViewModel): boolean {
+  const incoming = new Map<string, number>();
+  for (const edge of vm.edges) {
+    incoming.set(edge.to, (incoming.get(edge.to) ?? 0) + 1);
+  }
+  for (const count of incoming.values()) {
+    if (count >= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * First parent of each child. The view-model emits the trunk parent first.
+ *
+ * @param vm - Renderer input
+ */
+function firstParents(vm: ViewModel): Map<string, string> {
+  const parents = new Map<string, string>();
+  for (const edge of vm.edges) {
+    if (!parents.has(edge.to)) {
+      parents.set(edge.to, edge.from);
+    }
+  }
+  return parents;
+}
+
+/**
+ * First-parent walk from the history tip back to the root, then reversed
+ * so x runs oldest to newest on the trunk row.
+ *
+ * @param vm - Renderer input
+ */
+function trunkSpine(vm: ViewModel): string[] {
+  const parents = firstParents(vm);
+  const tip = vm.nodes[vm.nodes.length - 1];
+  if (tip === undefined) {
+    return [];
+  }
+  const path: string[] = [];
+  const seen = new Set<string>();
+  let current: string | undefined = tip.sha;
+  while (current !== undefined && !seen.has(current)) {
+    seen.add(current);
+    path.push(current);
+    current = parents.get(current);
+  }
+  path.reverse();
+  return path;
+}
+
+/**
+ * Steps from `sha` to the root along first parents.
+ *
+ * @param sha - Room
+ * @param parents - First-parent map
+ */
+function depthFromRoot(sha: string, parents: Map<string, string>): number {
+  let depth = 0;
+  let current: string | undefined = sha;
+  const seen = new Set<string>();
+  while (current !== undefined && parents.has(current) && !seen.has(current)) {
+    seen.add(current);
+    current = parents.get(current);
+    depth += 1;
+  }
+  return depth;
+}
+
+/**
+ * Room centers. Linear halls keep the single-row v1 layout. A diamond
+ * puts the first-parent spine on the main row and the other lane below.
+ *
+ * @param vm - Renderer input
+ */
+function roomPoints(vm: ViewModel): { points: Point[]; height: number } {
+  const count = vm.nodes.length;
+  const lit = vm.nodes.map((node) => node.lit);
+  if (!hasMerge(vm)) {
+    const xs = nodeXs(count, lit);
+    return {
+      points: xs.map((x) => ({ x, y: ROOM_Y })),
+      height: HEIGHT,
+    };
+  }
+  const spine = trunkSpine(vm);
+  const litBySha = new Map(vm.nodes.map((node) => [node.sha, node.lit]));
+  const spineLit = spine.map((sha) => litBySha.get(sha) === true);
+  const spineXs = nodeXs(spine.length, spineLit);
+  const at = new Map<string, Point>();
+  for (let i = 0; i < spine.length; i += 1) {
+    const sha = spine[i];
+    const x = spineXs[i] ?? PAD_X;
+    if (sha !== undefined) {
+      at.set(sha, { x, y: ROOM_Y });
+    }
+  }
+  const parents = firstParents(vm);
+  for (const node of vm.nodes) {
+    if (at.has(node.sha)) {
+      continue;
+    }
+    const depth = depthFromRoot(node.sha, parents);
+    const spineSha = spine[depth];
+    const spineAt = spineSha === undefined ? undefined : at.get(spineSha);
+    at.set(node.sha, { x: spineAt === undefined ? PAD_X : spineAt.x, y: BRANCH_Y });
+  }
+  const points = vm.nodes.map((node) => {
+    const found = at.get(node.sha);
+    return found === undefined ? { x: PAD_X, y: ROOM_Y } : found;
+  });
+  return { points, height: DIAMOND_HEIGHT };
+}
+
+/**
  * Warm wash behind the lit wing. Missing when nothing is lit.
  *
  * @param points - Room centers in order
  * @param lit - Parallel lit flags
  * @param wash - Range paint
+ * @param band - Vertical band; omit on linear halls so the rect stays v1
  */
-function rangeWash(points: Point[], lit: boolean[], wash: string): string {
+function rangeWash(
+  points: Point[],
+  lit: boolean[],
+  wash: string,
+  band?: { y: number; height: number },
+): string {
   let first = -1;
   let last = -1;
   for (let i = 0; i < lit.length; i += 1) {
@@ -174,7 +303,9 @@ function rangeWash(points: Point[], lit: boolean[], wash: string): string {
   }
   const x = start.x - 26;
   const w = end.x - start.x + 52;
-  return `<rect x="${String(x)}" y="${String(ROOM_Y - 36)}" width="${String(w)}" height="72" rx="24" fill="${wash}" />`;
+  const y = band === undefined ? ROOM_Y - 36 : band.y;
+  const height = band === undefined ? 72 : band.height;
+  return `<rect x="${String(x)}" y="${String(y)}" width="${String(w)}" height="${String(height)}" rx="24" fill="${wash}" />`;
 }
 
 /**
@@ -184,23 +315,20 @@ function rangeWash(points: Point[], lit: boolean[], wash: string): string {
  */
 export function renderGraph(vm: ViewModel): string {
   const count = vm.nodes.length;
-  const lit = vm.nodes.map((node) => node.lit);
-  const xs = nodeXs(count, lit);
-  const lastX = xs.length === 0 ? PAD_X : (xs[xs.length - 1] ?? PAD_X);
+  const { points, height } = roomPoints(vm);
+  const lastPoint = points[points.length - 1];
+  const lastX = lastPoint === undefined ? PAD_X : lastPoint.x;
   const width = Math.max(PAD_X * 2, lastX + PAD_X);
   const good = paintFor(vm.colors.good);
   const bad = paintFor(vm.colors.bad);
   const unknown = paintFor(vm.colors.unknown);
   const rim = paintFor(vm.colors.head);
   const wash = paintFor(vm.colors.range);
-  const points: Point[] = [];
   const bySha = new Map<string, Point>();
   for (let i = 0; i < count; i += 1) {
     const node = vm.nodes[i];
-    const x = xs[i] ?? PAD_X;
-    const at = { x, y: ROOM_Y };
-    points.push(at);
-    if (node !== undefined) {
+    const at = points[i];
+    if (node !== undefined && at !== undefined) {
       bySha.set(node.sha, at);
     }
   }
@@ -208,6 +336,7 @@ export function renderGraph(vm: ViewModel): string {
     points,
     vm.nodes.map((node) => node.lit),
     wash,
+    hasMerge(vm) ? { y: ROOM_Y - 36, height: BRANCH_Y - ROOM_Y + 72 } : undefined,
   );
   const edges = vm.edges
     .map((edge) => {
@@ -248,7 +377,7 @@ export function renderGraph(vm: ViewModel): string {
     })
     .join("");
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(width)} ${String(HEIGHT)}" role="img" aria-label="commit graph">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(width)} ${String(height)}" role="img" aria-label="commit graph">`,
     `<rect width="100%" height="100%" fill="${GRAPH_PAINT.background}" />`,
     washRect,
     edges,

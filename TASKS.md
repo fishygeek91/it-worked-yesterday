@@ -274,13 +274,13 @@ Human-authorized 2026-08-18. Scope is the v2.0 section of [docs/design.md](docs/
 
 ### TASK 24 — Diamond renderer
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 23, TASK 6
 - **Deliverables:** Two-lane layout in `src/render`: trunk on the main row, branch on a second row, corridors that fork and join. Fog, wash, and lantern rules unchanged. View-model shape unchanged.
 - **Acceptance:**
-  - [ ] Consumes the view-model only; still no import of bugs or the suite.
-  - [ ] Every commit keeps its `data-sha`; shape + label still carry the signal, not color alone.
-  - [ ] Linear graphs render byte-identical to v1.
+  - [x] Consumes the view-model only; still no import of bugs or the suite.
+  - [x] Every commit keeps its `data-sha`; shape + label still carry the signal, not color alone.
+  - [x] Linear graphs render byte-identical to v1.
 
 ### TASK 25 — Merged level
 
