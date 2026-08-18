@@ -1,4 +1,10 @@
-import { dispatch, sessionFromUrl } from "./harness";
+import {
+  dispatch,
+  isTutorialInput,
+  markTutorialDone,
+  sessionForVisit,
+  type TutorialStore,
+} from "./harness";
 import { buildViewModel, renderGraph } from "./render";
 import "./style.css";
 import { renderChrome, renderWinCard } from "./ui";
@@ -9,7 +15,14 @@ if (!(found instanceof HTMLElement)) {
 }
 const app: HTMLElement = found;
 
-let session = sessionFromUrl(window.location.search);
+const store: TutorialStore = {
+  get: (key) => window.localStorage.getItem(key),
+  set: (key, value) => {
+    window.localStorage.setItem(key, value);
+  },
+};
+
+let session = sessionForVisit(window.location.search, store);
 
 /**
  * Paint chrome and the dungeon map from the current session.
@@ -36,6 +49,9 @@ app.addEventListener("click", (event: Event) => {
     return;
   }
   session = dispatch(session, command);
+  if (session.outcome === "won" && isTutorialInput(session.input)) {
+    markTutorialDone(store);
+  }
   paint();
 });
 

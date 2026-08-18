@@ -30,7 +30,10 @@ const MUTATION_IDS: readonly MutationId[] = [
   "sliceFencepost",
 ];
 
-const TUTORIAL_INPUT: GenerateInput = {
+/**
+ * Pinned tutorial dungeon. n=8, first-bad 3, offByOneLoopBound.
+ */
+export const TUTORIAL_INPUT: GenerateInput = {
   suspectCount: 8,
   firstBadIndex: 3,
   seed: 1729,

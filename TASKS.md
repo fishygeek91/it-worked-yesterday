@@ -121,13 +121,13 @@ One task per session. Do not start the next until the current task's acceptance 
 
 ### TASK 10 — Tutorial
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 4, TASK 8
 - **Deliverables:** Linear `n=8`, first-bad suspect index `3`, mutation `offByOneLoopBound`. Three-line teach copy. Unskippable once (`localStorage` key `iwy.tutorialDone`).
 - **Acceptance:**
-  - [ ] First visit cannot skip.
-  - [ ] After completion, free play is allowed.
-  - [ ] First-bad and mutation stay pinned.
+  - [x] First visit cannot skip.
+  - [x] After completion, free play is allowed.
+  - [x] First-bad and mutation stay pinned.
 
 ### TASK 11 — Yesterday
 
