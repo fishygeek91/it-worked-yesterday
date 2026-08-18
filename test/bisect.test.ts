@@ -6,6 +6,7 @@ import {
   costOf,
   GameError,
   generateBuggyHistory,
+  generateDiamondHistory,
   indexOfSha,
   mark,
   midpoint,
@@ -14,7 +15,7 @@ import {
   runSuite,
   start,
 } from "../src/core";
-import { requireSha } from "./helpers";
+import { optimalAccuse, requireSha } from "./helpers";
 
 describe("midpoint math", () => {
   it("uses floor((lo + hi) / 2) and null when hi - lo === 1", () => {
@@ -71,5 +72,44 @@ describe("hand-checked 8-suspect walk", () => {
     expect(() => {
       accuse(state);
     }).toThrow(GameError);
+  });
+});
+
+describe("DAG split", () => {
+  it("matches floor((lo + hi) / 2) on a linear history", () => {
+    const generated = generateBuggyHistory({
+      suspectCount: 8,
+      firstBadIndex: 3,
+      seed: 1729,
+      mutation: "offByOneLoopBound",
+    });
+    const state = start(generated.repo, generated.knownGood, generated.knownBad);
+    const lo = indexOfSha(generated.repo, generated.knownGood);
+    const hi = indexOfSha(generated.repo, generated.knownBad);
+    const mid = midpointIndex(lo, hi);
+    if (mid === null) {
+      throw new Error("expected a linear midpoint");
+    }
+    expect(state.current).toBe(requireSha(generated.repo, mid));
+    expect(state.suspects).toHaveLength(8);
+  });
+
+  it("accuses the planted first-bad on an honest diamond walk and loses when the player lies", () => {
+    const generated = generateDiamondHistory({
+      suspectCount: 8,
+      seed: 1729,
+      mutation: "missingReturn",
+      firstBadLane: "branch",
+      firstBadOnLane: 1,
+    });
+    expect(optimalAccuse(generated)).toBe(generated.firstBad);
+
+    let state = start(generated.repo, generated.knownGood, generated.knownBad);
+    while (state.status === "searching") {
+      const ok = runSuite(commitAt(state.repo, state.current).tree).ok;
+      state = mark(state, ok ? "bad" : "good");
+    }
+    state = accuse(state);
+    expect(state.accused).not.toBe(generated.firstBad);
   });
 });

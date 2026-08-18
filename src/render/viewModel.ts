@@ -114,7 +114,7 @@ export function buildViewModel(session: GameSession): ViewModel {
       message: commit.message,
       shape: tokens.shape,
       label: tokens.label,
-      lit: i > lo && i <= hi,
+      lit: session.bisect.suspects.includes(sha),
     });
     if (i > 0) {
       edges.push({ from: shaAt(repo, i - 1), to: sha });
