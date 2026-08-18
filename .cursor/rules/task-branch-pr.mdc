@@ -1,0 +1,15 @@
+---
+description: Each TASKS.md task ships on its own branch, PR, and merge — never on main.
+alwaysApply: true
+---
+
+# Task branch + PR + merge
+
+When implementing a `TASKS.md` task (or the user says "next task", "ship TASK N", or "make a plan" for a ⬜/⏳ task), follow `.cursor/skills/ship-task/SKILL.md`.
+
+- One task per branch. Never commit task work to `main`.
+- Branch: `task/<id>-<slug>` (example: `task/10-tutorial`).
+- After acceptance criteria and quality gates: commit, push, open a PR, merge it, return to `main`.
+- That standing ask is merge permission for that task's PR only. Still use `gh pr merge --merge --delete-branch`. Then `git checkout main && git pull && git fetch --prune`.
+- Do not start the next ⬜ task on the same branch.
+- `gh repo create` and GitHub Pages still need an explicit human ask.

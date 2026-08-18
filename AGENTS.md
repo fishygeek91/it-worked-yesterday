@@ -15,15 +15,14 @@ Not a real git. Not GitQuest. Not a sequel to `sorta-fast`. Not `npc-of-the-inte
 ## Session rules
 
 1. **One `TASKS.md` task per session.** Finish its acceptance criteria. Stop. Print the next ⬜ task id and title.
-2. **Do not merge** unless the human asked.
-3. **Do not `git commit`** unless the human asked.
-4. **Do not `gh repo create`, push, or enable Pages** unless the human asked.
-5. **Never weaken tests.** Do not delete, skip, or loosen a failing test to go green. Fix the code or stop and say why the test is wrong.
-6. **Do not reopen locked v1 decisions.** They live in `docs/design.md` under "Locked decisions."
-7. **If a locked decision blocks you**, write one paragraph to `docs/DEVIATIONS.md` (what, why, smallest workaround) and continue. Do not redesign.
-8. **Do not invent** a combat system, inventory, LLM, backend, auth, or a real git/WASM port.
-9. **Do not install** UI component libraries or add runtime dependencies without a one-sentence justification in `docs/DEVIATIONS.md`.
-10. **Do not add** merges, blame, checkout-any, GIF export, sound, or extra levels unless the current task says so.
+2. **Ship each task on its own branch + PR + merge.** Never commit task work to `main`. Follow `.cursor/skills/ship-task/SKILL.md` (branch `task/<id>-<slug>`, push, `gh pr create`, `gh pr merge --merge --delete-branch`, return to `main`).
+3. **Do not `gh repo create` or enable Pages** unless the human asked.
+4. **Never weaken tests.** Do not delete, skip, or loosen a failing test to go green. Fix the code or stop and say why the test is wrong.
+5. **Do not reopen locked v1 decisions.** They live in `docs/design.md` under "Locked decisions."
+6. **If a locked decision blocks you**, write one paragraph to `docs/DEVIATIONS.md` (what, why, smallest workaround) and continue. Do not redesign.
+7. **Do not invent** a combat system, inventory, LLM, backend, auth, or a real git/WASM port.
+8. **Do not install** UI component libraries or add runtime dependencies without a one-sentence justification in `docs/DEVIATIONS.md`.
+9. **Do not add** merges, blame, checkout-any, GIF export, sound, or extra levels unless the current task says so.
 
 ## Invariants
 
