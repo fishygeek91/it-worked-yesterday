@@ -151,12 +151,12 @@ One task per session. Do not start the next until the current task's acceptance 
 
 ### TASK 13 — Playwright: tutorial is winnable
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 10, TASK 8
 - **Deliverables:** `e2e/` spec that plays the tutorial by marking what the room said and accuses.
 - **Acceptance:**
-  - [ ] Spec reaches a win without skipping the tutorial by cheat.
-  - [ ] Does not import mutations. Drives the UI.
+  - [x] Spec reaches a win without skipping the tutorial by cheat.
+  - [x] Does not import mutations. Drives the UI.
 
 ### TASK 14 — README screenshot + live placeholder
 
