@@ -1,6 +1,8 @@
 import type { GameSession, SessionInput } from "./session";
 import { isDiamondInput, isOctopusInput } from "./session";
 import {
+  FRIDAY_INPUT,
+  HOTFIX_INPUT,
   MERGED_INPUT,
   OCTOPUS_INPUT,
   parseUrl,
@@ -87,6 +89,39 @@ export function isMergedInput(input: SessionInput): boolean {
     input.mutation === MERGED_INPUT.mutation &&
     input.firstBadLane === MERGED_INPUT.firstBadLane &&
     input.firstBadOnLane === MERGED_INPUT.firstBadOnLane
+  );
+}
+
+/**
+ * True when this session is the pinned Friday deploy (linear n=64).
+ *
+ * @param input - Session pin
+ */
+export function isFridayInput(input: SessionInput): boolean {
+  if (isDiamondInput(input) || isOctopusInput(input)) {
+    return false;
+  }
+  return (
+    input.suspectCount === FRIDAY_INPUT.suspectCount &&
+    input.firstBadIndex === FRIDAY_INPUT.firstBadIndex &&
+    input.seed === FRIDAY_INPUT.seed &&
+    input.mutation === FRIDAY_INPUT.mutation
+  );
+}
+
+/**
+ * True when this session is the pinned hotfix diamond (n=16, trunk lane).
+ *
+ * @param input - Session pin
+ */
+export function isHotfixInput(input: SessionInput): boolean {
+  return (
+    isDiamondInput(input) &&
+    input.suspectCount === HOTFIX_INPUT.suspectCount &&
+    input.seed === HOTFIX_INPUT.seed &&
+    input.mutation === HOTFIX_INPUT.mutation &&
+    input.firstBadLane === HOTFIX_INPUT.firstBadLane &&
+    input.firstBadOnLane === HOTFIX_INPUT.firstBadOnLane
   );
 }
 

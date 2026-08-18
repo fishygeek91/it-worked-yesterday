@@ -323,15 +323,15 @@ Human-authorized 2026-08-18 by chat charter. Scope is the v2.1 section of [docs/
 
 ### TASK 28 — Extra levels: friday + hotfix
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 27
 - **Deliverables:** The two remaining v2.1 design-table levels, exactly as pinned there: `friday` (The Friday deploy, linear n=64, first-bad 61, `sliceFencepost`) and `hotfix` (The hotfix, diamond n=16, trunk lane index 3, `brokenComparison`). Doors in the cabinet. Postmortem teach lines. Nothing else: no loot, no XP, no fourth tutorial.
 - **Acceptance:**
-  - [ ] `?l=friday` and `?l=hotfix` parse, ignore `n` and `seed`, and are case-sensitive (`?l=Friday` throws `INVALID_URL`).
-  - [ ] Both use the same clock and cost table; share links serialize their own level id, not seeded.
-  - [ ] Doors render in the cabinet; teach copy stays postmortem tone.
-  - [ ] Unseen visitors are still routed to the tutorial first.
-  - [ ] e2e: each new level is winnable by marking what the room said; no mutation imports.
+  - [x] `?l=friday` and `?l=hotfix` parse, ignore `n` and `seed`, and are case-sensitive (`?l=Friday` throws `INVALID_URL`).
+  - [x] Both use the same clock and cost table; share links serialize their own level id, not seeded.
+  - [x] Doors render in the cabinet; teach copy stays postmortem tone.
+  - [x] Unseen visitors are still routed to the tutorial first.
+  - [x] e2e: each new level is winnable by marking what the room said; no mutation imports.
 
 ### TASK 29 — Sound latch
 

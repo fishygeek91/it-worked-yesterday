@@ -11,6 +11,8 @@ export {
   type SessionOutcome,
 } from "./session";
 export {
+  isFridayInput,
+  isHotfixInput,
   isMergedInput,
   isOctopusLevelInput,
   isTutorialDone,
@@ -24,6 +26,8 @@ export {
   type Visit,
 } from "./tutorial";
 export {
+  FRIDAY_INPUT,
+  HOTFIX_INPUT,
   MERGED_INPUT,
   OCTOPUS_INPUT,
   parseUrl,

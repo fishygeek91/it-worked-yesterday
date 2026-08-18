@@ -4,6 +4,8 @@ import { commitAt } from "../core/git";
 import { costOf, optimalMarks } from "../core/score";
 import type { GameSession, SessionCommand } from "../harness/session";
 import {
+  isFridayInput,
+  isHotfixInput,
   isMergedInput,
   isOctopusLevelInput,
   isTutorialInput,
@@ -51,6 +53,12 @@ export function caseName(session: GameSession): string {
   }
   if (isOctopusLevelInput(session.input)) {
     return "The release train";
+  }
+  if (isFridayInput(session.input)) {
+    return "The Friday deploy";
+  }
+  if (isHotfixInput(session.input)) {
+    return "The hotfix";
   }
   return session.input.suspectCount === 64 ? "Seeded 64" : "Seeded 32";
 }
@@ -188,6 +196,8 @@ export type OpenCase =
   | "yesterday"
   | "merged"
   | "octopus"
+  | "friday"
+  | "hotfix"
   | "seeded32"
   | "seeded64"
   | "learn"
@@ -211,6 +221,8 @@ export function renderDoors(options: {
     doorLink("?l=yesterday", "Yesterday", current === "yesterday"),
     doorLink("?l=merged", "The feature branch", current === "merged"),
     doorLink("?l=octopus", "The release train", current === "octopus"),
+    doorLink("?l=friday", "The Friday deploy", current === "friday"),
+    doorLink("?l=hotfix", "The hotfix", current === "hotfix"),
     doorLink("?l=learn", "Learn", current === "learn"),
     doorLink(`?l=seeded&n=32&seed=${String(seed)}`, "Seeded 32", current === "seeded32"),
     doorLink(`?l=seeded&n=64&seed=${String(seed)}`, "Seeded 64", current === "seeded64"),
@@ -270,22 +282,76 @@ export function winExhibit(session: GameSession): string {
 function caseDoors(session: GameSession): string {
   const seed = session.input.seed;
   const n = session.input.suspectCount === 64 ? 64 : 32;
-  const tutorial = isTutorialInput(session.input);
-  const yesterday = isYesterdayInput(session.input);
-  const merged = isMergedInput(session.input);
-  const octopus = isOctopusLevelInput(session.input);
-  const current: OpenCase = tutorial
+  const current: OpenCase = isTutorialInput(session.input)
     ? "tutorial"
-    : yesterday
+    : isYesterdayInput(session.input)
       ? "yesterday"
-      : merged
+      : isMergedInput(session.input)
         ? "merged"
-        : octopus
+        : isOctopusLevelInput(session.input)
           ? "octopus"
-          : n === 64
-            ? "seeded64"
-            : "seeded32";
+          : isFridayInput(session.input)
+            ? "friday"
+            : isHotfixInput(session.input)
+              ? "hotfix"
+              : n === 64
+                ? "seeded64"
+                : "seeded32";
   return renderDoors({ current, seed, next: { n, seed: nextSeed(seed) } });
+}
+
+/**
+ * Case brief above the desk. Tutorial keeps its three pinned sentences;
+ * every other case gets one or two postmortem lines. No lane is named:
+ * the brief opens the file, it does not solve it.
+ *
+ * @param session - Current session
+ */
+function teachCopy(session: GameSession): string {
+  if (isTutorialInput(session.input)) {
+    return [
+      `<div class="brief">`,
+      `<p class="teach">HEAD is red. The last green is 8 suspects back.</p>`,
+      `<p class="teach">Mark the checkout. The range narrows.</p>`,
+      `<p class="teach">When one SHA remains, accuse it.</p>`,
+      `</div>`,
+    ].join("");
+  }
+  if (isYesterdayInput(session.input)) {
+    return `<div class="brief"><p class="teach">HEAD is red. It worked sixteen suspects back.</p></div>`;
+  }
+  if (isMergedInput(session.input)) {
+    return [
+      `<div class="brief">`,
+      `<p class="teach">HEAD is red. A feature branch joined before HEAD.</p>`,
+      `<p class="teach">The rot came in on one lane.</p>`,
+      `</div>`,
+    ].join("");
+  }
+  if (isOctopusLevelInput(session.input)) {
+    return [
+      `<div class="brief">`,
+      `<p class="teach">HEAD is red. Three branches merged in one commit.</p>`,
+      `<p class="teach">One of them brought the rot to the join.</p>`,
+      `</div>`,
+    ].join("");
+  }
+  if (isFridayInput(session.input)) {
+    return [
+      `<div class="brief">`,
+      `<p class="teach">HEAD is red. Sixty-four suspects. It shipped on a Friday.</p>`,
+      `</div>`,
+    ].join("");
+  }
+  if (isHotfixInput(session.input)) {
+    return [
+      `<div class="brief">`,
+      `<p class="teach">HEAD is red. A hotfix forked and joined before HEAD.</p>`,
+      `<p class="teach">One lane carried the rot.</p>`,
+      `</div>`,
+    ].join("");
+  }
+  return `<div class="brief"><p class="teach">HEAD is red. ${String(session.input.suspectCount)} suspects. The seed is the case number.</p></div>`;
 }
 
 /**
@@ -307,37 +373,15 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
   const shortSha = current.sha.slice(0, 7);
   const outcome = outcomeCopy(session);
   const outcomeBlock = outcome === "" ? "" : `<p class="outcome">${outcome}</p>`;
-  const teach = isTutorialInput(session.input)
-    ? [
-        `<div class="brief">`,
-        `<p class="teach">HEAD is red. The last green is 8 suspects back.</p>`,
-        `<p class="teach">Mark the checkout. The range narrows.</p>`,
-        `<p class="teach">When one SHA remains, accuse it.</p>`,
-        `</div>`,
-      ].join("")
-    : isYesterdayInput(session.input)
-      ? `<div class="brief"><p class="teach">HEAD is red. It worked sixteen suspects back.</p></div>`
-      : isMergedInput(session.input)
-        ? [
-            `<div class="brief">`,
-            `<p class="teach">HEAD is red. A feature branch joined before HEAD.</p>`,
-            `<p class="teach">The rot came in on one lane.</p>`,
-            `</div>`,
-          ].join("")
-        : isOctopusLevelInput(session.input)
-          ? [
-              `<div class="brief">`,
-              `<p class="teach">HEAD is red. Three branches merged in one commit.</p>`,
-              `<p class="teach">One of them brought the rot to the join.</p>`,
-              `</div>`,
-            ].join("")
-          : `<div class="brief"><p class="teach">HEAD is red. ${String(session.input.suspectCount)} suspects. The seed is the case number.</p></div>`;
+  const teach = teachCopy(session);
   const query = shareUrl(session);
   const share =
     !isTutorialInput(session.input) &&
     !isYesterdayInput(session.input) &&
     !isMergedInput(session.input) &&
-    !isOctopusLevelInput(session.input)
+    !isOctopusLevelInput(session.input) &&
+    !isFridayInput(session.input) &&
+    !isHotfixInput(session.input)
       ? `<p class="share">${escapeHtml(query)}</p><button type="button" class="copy" data-copy="${escapeHtml(query)}">copy</button>`
       : "";
   const doors = visit !== undefined && visit.tutorialDone ? caseDoors(session) : "";
@@ -385,7 +429,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
       ? `<p class="ready">One SHA remains. Accuse it.</p>`
       : "",
     `<div class="meter" aria-hidden="true"><span style="width:${String(meterPct)}%"></span></div>`,
-    isMergedInput(session.input) || isOctopusLevelInput(session.input)
+    isMergedInput(session.input) || isOctopusLevelInput(session.input) || isHotfixInput(session.input)
       ? `<p class="fairness">The clock is marks, not wall time. Optimal is a line count. A merge can miss it by a step.</p>`
       : `<p class="fairness">The clock is marks, not wall time. The suite does not mark for you.</p>`,
     outcomeBlock,
