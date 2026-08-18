@@ -9,7 +9,7 @@ When implementing a `TASKS.md` task (or the user says "next task", "ship TASK N"
 
 - One task per branch. Never commit task work to `main`.
 - Branch: `task/<id>-<slug>` (example: `task/10-tutorial`).
-- After acceptance criteria and quality gates: commit, push, open a PR, merge it, return to `main`.
+- After acceptance criteria and quality gates: commit, `git push`, open a PR, merge it, return to `main`. `origin/main` must match local `main`. Working tree must be clean before the next task.
 - That standing ask is merge permission for that task's PR only. Still use `gh pr merge --merge --delete-branch`. Then `git checkout main && git pull && git fetch --prune`.
 - Do not start the next ⬜ task on the same branch.
 - `gh repo create` and GitHub Pages still need an explicit human ask.

@@ -8,7 +8,7 @@ description: >-
 
 # Ship one TASKS.md task
 
-Standing workflow for this repo: **branch → implement → PR → merge → main**. Do not commit task work to `main`.
+Standing workflow for this repo: **branch → implement → PR → merge → main**. Do not commit task work to `main`. Keep `origin/main` current and the working tree clean: `git status` must be clean before starting the next task. After every task commit, `git push`. Never leave task files uncommitted on `main`.
 
 Read [AGENTS.md](../../../AGENTS.md), [docs/design.md](../../../docs/design.md), then the current ⬜ or ⏳ task in [TASKS.md](../../../TASKS.md).
 
@@ -72,9 +72,10 @@ gh pr merge --merge --delete-branch
 git checkout main
 git pull
 git fetch --prune
+git status
 ```
 
-Delete the local feature branch if it remains. Stop. Print the next ⬜ task id and title. Do not start it on this branch.
+`git status` must be clean. Delete the local feature branch if it remains. Stop. Print the next ⬜ task id and title. Do not start it on this branch.
 
 ## Do not
 
