@@ -12,8 +12,10 @@ import {
 import { buildViewModel, renderGraph } from "./render";
 import "./style.css";
 import {
+  cueForCommand,
   learnWalkNext,
   learnWalkStart,
+  playCue,
   renderBadUrl,
   renderChrome,
   renderLearn,
@@ -74,6 +76,16 @@ let boot = bootVisit(window.location.search);
 let helpOpen = false;
 
 /**
+ * Sound latch for this page load. Muted by default; page memory only.
+ */
+let soundOn = false;
+
+/**
+ * Created on the unmute gesture, never on load. No autoplay surprise.
+ */
+let audio: AudioContext | null = null;
+
+/**
  * Map a key to a session command. Letters only; no modifiers.
  *
  * @param key - event.key
@@ -111,6 +123,12 @@ function applyCommand(command: string): void {
   if (boot.session.outcome === "won" && isTutorialInput(boot.session.input)) {
     markTutorialDone(store);
   }
+  if (soundOn && audio !== null) {
+    const cue = cueForCommand(command, boot.session);
+    if (cue !== null) {
+      playCue(audio, cue);
+    }
+  }
   paint();
 }
 
@@ -142,7 +160,7 @@ function paint(): void {
   }
   const parts = [
     `<div id="map">${renderGraph(buildViewModel(session))}</div>`,
-    renderChrome(session, { tutorialDone: isTutorialDone(store), helpOpen }),
+    renderChrome(session, { tutorialDone: isTutorialDone(store), helpOpen, soundOn }),
   ];
   if (session.outcome === "won") {
     parts.push(renderWinCard(session));
@@ -256,6 +274,16 @@ app.addEventListener("click", (event: Event) => {
     if (boot.kind === "play" && boot.session.outcome === "won") {
       saveCardPng(boot.session);
     }
+    return;
+  }
+  const latch = target.closest("[data-sound]");
+  if (latch instanceof HTMLElement) {
+    // The latch is not a command: no dispatch, no cost, no clock.
+    soundOn = !soundOn;
+    if (soundOn && audio === null) {
+      audio = new AudioContext();
+    }
+    paint();
     return;
   }
   // A room click is the v2.1 penalty walk. Clicking the room the lantern
