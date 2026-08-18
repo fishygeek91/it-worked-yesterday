@@ -234,3 +234,61 @@ One task per session. Do not start the next until the current task's acceptance 
   - [x] The copy-result and save-card controls render only on a win and do not touch the clock; costs still come only from `score.ts`.
   - [x] `src/ui/shareKit.ts` does not import `src/core/bugs.ts` or `src/core/suite.ts`. PNG export uses no runtime dependency.
   - [x] e2e: after a tutorial win, saving the card downloads a `.png` file.
+
+## Phase 7 — v2.0
+
+Human-authorized 2026-08-18. Scope is the v2.0 section of [docs/design.md](docs/design.md): the `t` transcript and one diamond. Nothing from v-later.
+
+### TASK 21 — Transcript resume
+
+- **Status:** ⬜
+- **Deps:** TASK 5, TASK 19
+- **Deliverables:** URL param `t` over the alphabet `g`/`b`/`l`. Replay through `dispatch` from a fresh dungeon; the restored range, checkout, clock, and ledger are whatever the replay says. Share link carries `t` while searching, `marks` after an accuse.
+- **Acceptance:**
+  - [ ] `?l=seeded&n=32&seed=1729&t=gbg` restores the exact range, checkout, clock, and ledger of dispatching those commands live.
+  - [ ] `t` together with `marks` throws `INVALID_URL`. Unknown letters and marks the live engine would reject throw `INVALID_URL`. No coerce, no truncation.
+  - [ ] Replay costs go through `costOf` only. Determinism: same URL → same restored state.
+  - [ ] The share control emits `t` mid-search and `marks` on a finished game. Old `marks` links keep the v1 overlay behavior.
+
+### TASK 22 — Merge commits in core
+
+- **Status:** ⬜
+- **Deps:** TASK 1
+- **Deliverables:** Two-parent commits in `src/core` (root has none, merge has two, octopus rejected). DAG ancestry helpers walking `repo.order`. Diamond generator: one fork after the known-good, one join before HEAD, first-bad on either lane, failure persisting in DAG descendants.
+- **Acceptance:**
+  - [ ] SHAs hash both parents in order; same inputs, same SHA.
+  - [ ] Exactly one first-bad. The red set equals `firstBad` plus its DAG descendants; the other lane stays green; the join is red.
+  - [ ] Linear histories keep byte-identical SHAs and behavior.
+  - [ ] Zero DOM. Runs under Vitest in Node.
+
+### TASK 23 — DAG bisect
+
+- **Status:** ⬜
+- **Deps:** TASK 22
+- **Deliverables:** Suspect set `S` (ancestors of known-bad minus ancestors of every known-good), max-min split midpoint with `repo.order` tie-break, `good`/`bad` set updates, accuse at `|S| = 1`. Extend the fuzz bar with 200 seeded diamonds.
+- **Acceptance:**
+  - [ ] Midpoint maximizes `min(w, |S| - w)` and reduces to `floor((lo + hi) / 2)` on linear histories, byte-identical.
+  - [ ] An honest walk (mark what the suite said) always accuses the planted first-bad on all 200 diamond seeds.
+  - [ ] Marking against the suite still loses honestly; the engine does not auto-mark.
+  - [ ] Do not weaken the existing linear fuzz. Extend it.
+
+### TASK 24 — Diamond renderer
+
+- **Status:** ⬜
+- **Deps:** TASK 23, TASK 6
+- **Deliverables:** Two-lane layout in `src/render`: trunk on the main row, branch on a second row, corridors that fork and join. Fog, wash, and lantern rules unchanged. View-model shape unchanged.
+- **Acceptance:**
+  - [ ] Consumes the view-model only; still no import of bugs or the suite.
+  - [ ] Every commit keeps its `data-sha`; shape + label still carry the signal, not color alone.
+  - [ ] Linear graphs render byte-identical to v1.
+
+### TASK 25 — Merged level
+
+- **Status:** ⬜
+- **Deps:** TASK 21, TASK 23, TASK 24
+- **Deliverables:** `l=merged` pinned level per the design table: n=32, one diamond, first-bad pinned on the branch lane, `missingReturn`, pinned internal seed. Door in the cabinet. e2e: merged is winnable by marking what the room said; the win card and share kit work on the diamond.
+- **Acceptance:**
+  - [ ] `?l=merged` parses; it ignores `n` and `seed`; `?l=Merged` throws `INVALID_URL`.
+  - [ ] Unseen visitors are still routed to the tutorial first.
+  - [ ] e2e wins without importing mutations, driving the UI only.
+  - [ ] The win card stays 1200×630 with the guilty SHA lit; `save card` still downloads a PNG.

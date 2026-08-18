@@ -124,7 +124,7 @@ All of it, deterministic:
 
 Same seed → identical history, identical first-bad, identical trees, identical test results.
 
-v1 does **not** encode the mark transcript. Reloading a mid-bisect URL restores the dungeon and the displayed clock, not the partial range. Full resume is v2.
+v1 does **not** encode the mark transcript. Reloading a mid-bisect URL restores the dungeon and the displayed clock, not the partial range. Full resume is the v2.0 `t` param — see the v2.0 section.
 
 Invalid params throw `GameError` with code `INVALID_URL`. Do not coerce silently (no `n=31` → `32`). After the tutorial lock, the desk paints that error as a postmortem. It does not invent a dungeon.
 
@@ -139,7 +139,7 @@ Invalid params throw `GameError` with code `INVALID_URL`. Do not coerce silently
 
 Not a real git. The surface is:
 
-- Commit: `sha`, single `parent` (`null` on root), `message`, `tree`
+- Commit: `sha`, single `parent` (`null` on root), `message`, `tree` — v2.0 adds a second parent on the one merge commit; see the v2.0 section
 - `createLinearHistory`
 - `checkout(repo, sha)`
 - `log(repo)` — newest first, from HEAD to root
@@ -318,13 +318,86 @@ Win card: 1200×630, guilty SHA lit, `marks / optimal`, seed in the corner.
 - `blame` — shipped: costly peek at which path changed
 - `checkout <sha>` — do not build; penalty move that can leave the range
 
-### v2 (do not build now; do not design toward it in code)
+### v2.0 (launched — build per the v2.0 section below)
 
-- Merges, diamonds, octopus, merge-base
-- Mark-transcript resume in the URL
-- GIF export, sound, extra levels
+- One diamond: merge commits with two parents, one fork, one join
+- Mark-transcript resume in the URL (`t`)
+- One new pinned level: `merged`
+
+### v-later (do not build now; do not design toward it in code)
+
+- Octopus merges, arbitrary DAGs, merge-base puzzles
+- GIF export, sound, extra levels beyond `merged`
 - Real git / WASM
+
+### Never (not this game)
+
 - Backend, auth, LLM, inventory, combat
+
+## v2.0
+
+Human-authorized 2026-08-18. v1 rules stay in force except where this
+section amends them. Anything this section does not amend is unchanged.
+It amends exactly two locked decisions: **linear only** and **the URL
+does not encode the transcript**. Every other locked decision stands.
+
+### Resume: the `t` transcript
+
+The URL gains one param:
+
+| Param | Type | Rules |
+| --- | --- | --- |
+| `t` | string over `g`, `b`, `l` | Optional on every dungeon level. Mutually exclusive with `marks` — both present is `INVALID_URL`. |
+
+- Replay: plant the dungeon from `l` / `n` / `seed`, then dispatch each
+  letter in order — `g` → `good`, `b` → `bad`, `l` → `blame`. The restored
+  range, checkout, clock, and ledger are whatever the replay says. Costs go
+  through `costOf` like live play. This obsoletes the v1 "overlay, not
+  replay" rule when `t` is present; `marks` keeps the old overlay behavior
+  for finished games and old links.
+- Illegal transcripts throw `INVALID_URL`: an unknown letter, a `g`/`b`
+  after the range is a single commit, anything the live engine would
+  reject. No coerce, no truncation.
+- `accuse` is not in the alphabet. A finished game shares the win card and
+  `marks`; the transcript is a save file for a search in progress.
+- Share control: while searching, the share link carries `t`. After an
+  accuse, it carries `marks` exactly as v1.
+
+### Merges: the diamond
+
+- A commit has `parents`: one SHA, or two on a merge commit. The root has
+  none. Octopus stays out. SHAs hash both parents in order.
+- The generator builds one diamond: a trunk from the known-good to HEAD,
+  one feature branch that forks after the known-good and joins at one merge
+  commit before HEAD. Exactly one fork, exactly one join.
+- Exactly one first-bad, unchanged — but ancestry is now DAG ancestry. The
+  red set is `firstBad` and every commit that can reach it through parent
+  links (descendants). The other lane of the diamond is green. The join is
+  red when either lane carries the bug.
+- Suspect set `S`: ancestors of the known-bad (inclusive) minus ancestors
+  of every known-good (inclusive). Marking `good` at `c` removes
+  `ancestors(c)` from `S`. Marking `bad` at `c` shrinks `S` to
+  `ancestors(c) ∩ S`. Ready to accuse when `|S| = 1`.
+- Midpoint on a DAG: for each candidate `c` in `S`, let
+  `w(c) = |ancestors(c) ∩ S|` (inclusive). Check out the `c` that maximizes
+  `min(w(c), |S| - w(c))`. Tie-break: lowest `repo.order` index. On a
+  linear history this reduces to the v1 rule, which stays byte-identical.
+- The headline denominator stays `ceil(log2(n))`. A diamond walk can miss
+  it by a step; the fairness copy owns that sentence, the formula does not
+  move.
+- View-model shape is unchanged. `range` names the newest known-good on
+  the trunk and the oldest known-bad; per-node `lit` carries `S`.
+
+### Level: merged
+
+| Id | Name | `n` | First-bad | Mutation | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `merged` | The feature branch | 32 | Pinned on the branch lane | `missingReturn` | v2.0. One diamond. Pinned internal seed like tutorial and yesterday. |
+
+`l=merged` joins the `l` values. It ignores `n` and `seed` like the other
+pinned levels. The renderer draws two lanes: trunk on the main row, branch
+on a second row, corridors fork and join. Linear dungeons keep the v1
+single-row layout byte-identical.
 
 ## Stack
 
@@ -341,13 +414,16 @@ Mandatory style:
 
 ## Locked decisions
 
-Do not reopen these in v1:
+The v2.0 section amends exactly two of these: **linear only** (the
+`merged` diamond, and nothing wilder) and **midpoint** (the DAG split
+rule, which reduces to the v1 rule on linear histories). Do not reopen
+the rest:
 
 - Fake git, not real git
-- Linear only
+- Linear only, except the single v2.0 diamond
 - `n` = suspect count
-- Midpoint = `floor((lo + hi) / 2)`
-- One first-bad; failure persists in descendants
+- Midpoint = `floor((lo + hi) / 2)` on linear; the v2.0 max-min split on the diamond
+- One first-bad; failure persists in descendants (DAG ancestry in v2.0)
 - Work clock = marks from `score.ts`
 - mulberry32, no `Math.random` / `Date.now` in core or harness
 - Renderer does not own the rules
