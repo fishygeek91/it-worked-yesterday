@@ -13,7 +13,15 @@ import {
 /**
  * Level id in `l`. Case-sensitive. `learn` is a case file, not a dungeon.
  */
-export type LevelId = "tutorial" | "yesterday" | "seeded" | "learn" | "merged" | "octopus";
+export type LevelId =
+  | "tutorial"
+  | "yesterday"
+  | "seeded"
+  | "learn"
+  | "merged"
+  | "octopus"
+  | "friday"
+  | "hotfix";
 
 /**
  * Letters in the `t` param. Accuse is not in the alphabet: a finished
@@ -35,6 +43,8 @@ export type UrlState =
   | ({ level: "yesterday" } & UrlClock)
   | ({ level: "merged" } & UrlClock)
   | ({ level: "octopus" } & UrlClock)
+  | ({ level: "friday" } & UrlClock)
+  | ({ level: "hotfix" } & UrlClock)
   | ({ level: "seeded"; n: 32 | 64; seed: number } & UrlClock)
   | { level: "learn" };
 
@@ -107,6 +117,30 @@ export const OCTOPUS_INPUT: OctopusGenerateInput = {
 };
 
 /**
+ * Pinned Friday dungeon per the v2.1 design table: The Friday deploy.
+ * Linear n=64, first-bad at suspect 61, sliceFencepost.
+ */
+export const FRIDAY_INPUT: GenerateInput = {
+  suspectCount: 64,
+  firstBadIndex: 61,
+  seed: 1729,
+  mutation: "sliceFencepost",
+};
+
+/**
+ * Pinned hotfix dungeon per the v2.1 design table: The hotfix.
+ * One diamond, n=16, first-bad on the trunk at lane index 3,
+ * brokenComparison.
+ */
+export const HOTFIX_INPUT: DiamondGenerateInput = {
+  suspectCount: 16,
+  seed: 1729,
+  mutation: "brokenComparison",
+  firstBadLane: "trunk",
+  firstBadOnLane: 3,
+};
+
+/**
  * Throw `INVALID_URL`. URL edges use this code, not `INVALID_SEED`.
  *
  * @param message - Postmortem line
@@ -127,7 +161,9 @@ function isLevelId(value: string): value is LevelId {
     value === "seeded" ||
     value === "learn" ||
     value === "merged" ||
-    value === "octopus"
+    value === "octopus" ||
+    value === "friday" ||
+    value === "hotfix"
   );
 }
 
@@ -306,6 +342,12 @@ function inputFromUrl(state: UrlState): SessionInput {
   if (state.level === "octopus") {
     return OCTOPUS_INPUT;
   }
+  if (state.level === "friday") {
+    return FRIDAY_INPUT;
+  }
+  if (state.level === "hotfix") {
+    return HOTFIX_INPUT;
+  }
   return seededInput(state.n, state.seed);
 }
 
@@ -359,6 +401,12 @@ export function parseUrl(search: string): UrlState {
   }
   if (levelRaw === "octopus") {
     return { level: "octopus", ...clock };
+  }
+  if (levelRaw === "friday") {
+    return { level: "friday", ...clock };
+  }
+  if (levelRaw === "hotfix") {
+    return { level: "hotfix", ...clock };
   }
   return { level: "tutorial", ...clock };
 }
@@ -452,13 +500,19 @@ export function shareUrl(session: GameSession): string {
     if (sameDiamondInput(session.input, MERGED_INPUT)) {
       return serializeUrl({ level: "merged", ...clock });
     }
-    invalidUrl("only the pinned diamond has a url");
+    if (sameDiamondInput(session.input, HOTFIX_INPUT)) {
+      return serializeUrl({ level: "hotfix", ...clock });
+    }
+    invalidUrl("only the pinned diamonds have a url");
   }
   if (sameLinearInput(session.input, TUTORIAL_INPUT)) {
     return serializeUrl({ level: "tutorial", ...clock });
   }
   if (sameLinearInput(session.input, YESTERDAY_INPUT)) {
     return serializeUrl({ level: "yesterday", ...clock });
+  }
+  if (sameLinearInput(session.input, FRIDAY_INPUT)) {
+    return serializeUrl({ level: "friday", ...clock });
   }
   const n = session.input.suspectCount;
   if (n !== 32 && n !== 64) {
