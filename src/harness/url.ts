@@ -132,12 +132,12 @@ function parseSeed(raw: string | null): number {
 /**
  * Build generate input for a seeded URL.
  * Why a fresh mulberry32 here: generate reseeds from the same seed for salts.
- * Pick order is first-bad, then mutation, so TASK 12 cannot invent a second stream.
+ * Pick order is first-bad, then mutation. Do not invent a second stream.
  *
  * @param n - 32 or 64
  * @param seed - URL seed
  */
-function seededInput(n: 32 | 64, seed: number): GenerateInput {
+export function seededInput(n: 32 | 64, seed: number): GenerateInput {
   const rng = mulberry32(seed);
   const firstBadIndex = rng.nextInt(n);
   const mutation = MUTATION_IDS[rng.nextInt(MUTATION_IDS.length)];
@@ -145,6 +145,21 @@ function seededInput(n: 32 | 64, seed: number): GenerateInput {
     throw new GameError("INVALID_INDEX", "url: empty mutation table");
   }
   return { suspectCount: n, firstBadIndex, seed, mutation };
+}
+
+/**
+ * True when two generate inputs are the same dungeon pin.
+ *
+ * @param left - First input
+ * @param right - Second input
+ */
+function sameInput(left: GenerateInput, right: GenerateInput): boolean {
+  return (
+    left.suspectCount === right.suspectCount &&
+    left.firstBadIndex === right.firstBadIndex &&
+    left.seed === right.seed &&
+    left.mutation === right.mutation
+  );
 }
 
 /**
@@ -224,4 +239,28 @@ export function sessionFromUrl(search: string): GameSession {
   const state = parseUrl(search);
   const session = createSession(inputFromUrl(state));
   return { ...session, marks: state.marks };
+}
+
+/**
+ * Share query for this session. Marks overlay the clock; they do not replay.
+ *
+ * @param session - Current session
+ */
+export function shareUrl(session: GameSession): string {
+  if (sameInput(session.input, TUTORIAL_INPUT)) {
+    return serializeUrl({ level: "tutorial", marks: session.marks });
+  }
+  if (sameInput(session.input, YESTERDAY_INPUT)) {
+    return serializeUrl({ level: "yesterday", marks: session.marks });
+  }
+  const n = session.input.suspectCount;
+  if (n !== 32 && n !== 64) {
+    invalidUrl(`seeded n must be 32 or 64, got ${String(n)}`);
+  }
+  return serializeUrl({
+    level: "seeded",
+    n,
+    seed: session.input.seed,
+    marks: session.marks,
+  });
 }
