@@ -29,6 +29,16 @@ export type BlamePeek = {
 };
 
 /**
+ * One line of the interview record: the room, what the player said,
+ * and what the suite said. Written on every mark, read back on a loss.
+ */
+export type LedgerEntry = {
+  sha: string;
+  said: "good" | "bad";
+  suiteOk: boolean;
+};
+
+/**
  * Headless game session. The harness owns the clock; core owns the range.
  */
 export type GameSession = {
@@ -38,6 +48,7 @@ export type GameSession = {
   marks: number;
   lastResult: SuiteResult;
   lastPeek: BlamePeek | null;
+  ledger: readonly LedgerEntry[];
   outcome: SessionOutcome;
 };
 
@@ -93,6 +104,7 @@ export function createSession(input: GenerateInput): GameSession {
     marks: 0,
     lastResult: suiteAtCurrent(bisect),
     lastPeek: null,
+    ledger: [],
     outcome: "playing",
   };
 }
@@ -127,6 +139,12 @@ export function dispatch(session: GameSession, command: string): GameSession {
     };
   }
   if (command === "good" || command === "bad") {
+    const room = commitAt(session.bisect.repo, session.bisect.current);
+    const entry: LedgerEntry = {
+      sha: room.sha,
+      said: command,
+      suiteOk: session.lastResult.ok,
+    };
     const bisect = mark(session.bisect, command);
     return {
       ...session,
@@ -134,6 +152,7 @@ export function dispatch(session: GameSession, command: string): GameSession {
       marks: session.marks + cost,
       lastResult: suiteAtCurrent(bisect),
       lastPeek: null,
+      ledger: [...session.ledger, entry],
     };
   }
   const bisect = accuse(session.bisect);

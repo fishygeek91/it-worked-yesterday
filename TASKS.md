@@ -211,3 +211,14 @@ One task per session. Do not start the next until the current task's acceptance 
   - [x] Unseen visitors are routed to the pinned tutorial even when the URL asks for learn.
   - [x] Locked sentences render; frozen exhibits keep every `data-sha`; no goblin voice.
   - [x] The honest walk wins at `optimalMarks(8)` through `costOf` only; play keys do not drive it.
+
+### TASK 19 — Interview record
+
+- **Status:** ✅
+- **Deps:** TASK 15
+- **Deliverables:** Session-only ledger of every mark (room SHA, player word, suite verdict) in `src/harness/session.ts`. On a loss the desk reads the record back and flags every line that argued with the suite. No persistence, no new commands, no cost changes.
+- **Acceptance:**
+  - [x] `good`/`bad` append a ledger entry; `blame`/`accuse` do not; `reset` clears it.
+  - [x] A lost walk always shows at least one flagged lie; entries stay in mark order.
+  - [x] The record renders only on `lost` — never while playing, never on a win.
+  - [x] Determinism holds: the ledger derives from commands only, no wall clock.

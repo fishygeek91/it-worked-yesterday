@@ -3,6 +3,7 @@ export {
   dispatch,
   type BlamePeek,
   type GameSession,
+  type LedgerEntry,
   type SessionCommand,
   type SessionOutcome,
 } from "./session";
