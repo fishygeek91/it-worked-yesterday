@@ -166,3 +166,16 @@ One task per session. Do not start the next until the current task's acceptance 
 - **Acceptance:**
   - [x] What-it-is stays ≤ 6 lines.
   - [x] Live URL is a placeholder until Pages is enabled by a human.
+
+## Phase 6 — v1.1
+
+### TASK 15 — Blame peek + long hall
+
+- **Status:** ✅
+- **Deps:** TASK 8, TASK 12
+- **Deliverables:** Live `blame` (cost 2 from `score.ts`). Path-only peek. Compressed n=32/64 halls. Yesterday one-liner. `?` help. Checkout stays rejected.
+- **Acceptance:**
+  - [x] `blame` increments the clock through `costOf` only and does not move the range.
+  - [x] A red room names the mutated path. A green room names no path. The hunk is not shown.
+  - [x] `checkout` and unknown commands still throw `INVALID_COMMAND`.
+  - [x] Seeded n=32 still emits every `data-sha`. Fogged wings pack tighter than the even hallway.

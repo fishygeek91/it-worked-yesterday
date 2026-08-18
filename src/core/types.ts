@@ -36,7 +36,7 @@ export type SuiteResult = {
 };
 
 /**
- * v1 commands plus reserved v1.1 names so the score table stays one file.
+ * Live commands plus reserved `checkout` so the score table stays one file.
  */
 export type CommandName = "good" | "bad" | "reset" | "accuse" | "blame" | "checkout";
 

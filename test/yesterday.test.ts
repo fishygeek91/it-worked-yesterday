@@ -118,6 +118,7 @@ describe("yesterday chrome", () => {
   it("does not show tutorial teach lines", () => {
     const html = renderChrome(sessionForVisit(YESTERDAY, doneStore()));
     expect(html).not.toContain("HEAD is red. The last green is 8 suspects back.");
+    expect(html).toContain("HEAD is red. It worked sixteen suspects back.");
     expect(html.toLowerCase()).not.toMatch(/goblin|attack|xp/);
   });
 });

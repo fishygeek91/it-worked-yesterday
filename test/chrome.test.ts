@@ -43,13 +43,22 @@ describe("renderChrome", () => {
     expect(html).toContain("This checkout is red. Failed: loop-bound.");
     expect(html).toContain("The clock is marks, not wall time. The suite does not mark for you.");
     expect(html.toLowerCase()).not.toMatch(/goblin|lurk|attack|xp|loot/);
-    for (const command of ["good", "bad", "reset", "accuse"] as const) {
+    for (const command of ["good", "bad", "reset", "accuse", "blame"] as const) {
       expect(html).toContain(`data-command="${command}" data-cost="${String(costOf(command))}"`);
     }
     expect(html).toMatch(/data-command="good" data-cost="[^"]+">good<\/button>/);
     expect(html).toMatch(/data-command="bad" data-cost="[^"]+">bad<\/button>/);
     expect(html).toMatch(/data-command="accuse" data-cost="[^"]+" disabled>/);
     expect(html).toMatch(/data-command="reset" data-cost="[^"]+">reset<\/button>/);
+    expect(html).toMatch(/data-command="blame" data-cost="[^"]+">blame<\/button>/);
+  });
+
+  it("shows the blamed path and not the hunk", () => {
+    const session = createSession(TUTORIAL);
+    const blamed = dispatch(session, "blame");
+    const html = renderChrome(blamed);
+    expect(html).toContain("Peek: src/collect.ts");
+    expect(html).not.toContain("i &lt; xs.length");
   });
 
   it("shows the commit message and the tiny diff after a win", () => {

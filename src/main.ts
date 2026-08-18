@@ -1,3 +1,4 @@
+import { indexOfSha } from "./core/git";
 import {
   dispatch,
   isTutorialDone,
@@ -39,6 +40,9 @@ function commandFromKey(key: string): SessionCommand | null {
   if (letter === "b") {
     return "bad";
   }
+  if (letter === "l") {
+    return "blame";
+  }
   if (letter === "a") {
     return "accuse";
   }
@@ -65,7 +69,14 @@ function applyCommand(command: string): void {
  * Paint the dungeon first, then the desk. Win card last.
  */
 function paint(): void {
+  const lo = indexOfSha(session.bisect.repo, session.bisect.knownGood);
+  const hi = indexOfSha(session.bisect.repo, session.bisect.knownBad);
+  const remaining = hi - lo;
   document.documentElement.dataset.outcome = session.outcome;
+  document.title =
+    remaining === 1
+      ? "accuse — it-worked-yesterday"
+      : `${String(remaining)} suspects — it-worked-yesterday`;
   const parts = [
     `<div id="map">${renderGraph(buildViewModel(session))}</div>`,
     renderChrome(session, { tutorialDone: isTutorialDone(store) }),
@@ -86,7 +97,7 @@ app.addEventListener("click", (event: Event) => {
     return;
   }
   const copy = target.closest("[data-copy]");
-  if (copy instanceof HTMLButtonElement) {
+  if (copy instanceof HTMLElement) {
     const text = copy.getAttribute("data-copy");
     if (text !== null && navigator.clipboard !== undefined) {
       void navigator.clipboard.writeText(text);
@@ -106,6 +117,14 @@ app.addEventListener("click", (event: Event) => {
 
 window.addEventListener("keydown", (event: KeyboardEvent) => {
   if (event.metaKey || event.ctrlKey || event.altKey) {
+    return;
+  }
+  if (event.key === "?" || event.key === "/") {
+    const help = app.querySelector(".help");
+    if (help instanceof HTMLDetailsElement) {
+      help.open = !help.open;
+      event.preventDefault();
+    }
     return;
   }
   const command = commandFromKey(event.key);

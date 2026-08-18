@@ -2,6 +2,7 @@ import {
   accuse,
   commitAt,
   costOf,
+  firstChangedFile,
   GameError,
   generateBuggyHistory,
   mark,
@@ -11,14 +12,21 @@ import {
 import type { BisectState, GeneratedHistory, GenerateInput, SuiteResult } from "../core";
 
 /**
- * v1 session commands. `blame` and `checkout` stay reserved in the score table.
+ * Session commands. `blame` is the v1.1 peek; `checkout` stays reserved.
  */
-export type SessionCommand = "good" | "bad" | "reset" | "accuse";
+export type SessionCommand = "good" | "bad" | "reset" | "accuse" | "blame";
 
 /**
  * Whether the player is still searching, or has named a SHA.
  */
 export type SessionOutcome = "playing" | "won" | "lost";
+
+/**
+ * Path named by the last `blame`, or `null` when that room showed no bug path.
+ */
+export type BlamePeek = {
+  path: string | null;
+};
 
 /**
  * Headless game session. The harness owns the clock; core owns the range.
@@ -29,13 +37,14 @@ export type GameSession = {
   bisect: BisectState;
   marks: number;
   lastResult: SuiteResult;
+  lastPeek: BlamePeek | null;
   outcome: SessionOutcome;
 };
 
-const SESSION_COMMANDS = new Set<string>(["good", "bad", "reset", "accuse"]);
+const SESSION_COMMANDS = new Set<string>(["good", "bad", "reset", "accuse", "blame"]);
 
 /**
- * True when `command` is a v1 session command.
+ * True when `command` is a live session command.
  *
  * @param command - Raw command name
  */
@@ -54,6 +63,22 @@ function suiteAtCurrent(bisect: BisectState): SuiteResult {
 }
 
 /**
+ * First non-salt path that still differs from the last green tree.
+ * Green rooms only differ by `meta/note.txt`, so they return `null`.
+ *
+ * @param session - Current session
+ */
+function peekPath(session: GameSession): string | null {
+  const good = commitAt(session.bisect.repo, session.generated.knownGood);
+  const room = commitAt(session.bisect.repo, session.bisect.current);
+  const hunk = firstChangedFile(good.tree, room.tree);
+  if (hunk === null) {
+    return null;
+  }
+  return hunk.path;
+}
+
+/**
  * Plant a dungeon and start at the first midpoint. Marks start at zero.
  *
  * @param input - Seed, n, first-bad index, mutation
@@ -67,14 +92,17 @@ export function createSession(input: GenerateInput): GameSession {
     bisect,
     marks: 0,
     lastResult: suiteAtCurrent(bisect),
+    lastPeek: null,
     outcome: "playing",
   };
 }
 
 /**
- * Apply one v1 command. Immutable. Clock increments only through `costOf`.
+ * Apply one command. Immutable. Clock increments only through `costOf`.
  * Why the test (not this function) chooses good/bad: the engine must not
  * auto-mark; a bad investigation can accuse the wrong SHA.
+ *
+ * `blame` names a path and does not move the range. `checkout` stays rejected.
  *
  * @param session - Current session
  * @param command - Raw command name
@@ -88,6 +116,16 @@ export function dispatch(session: GameSession, command: string): GameSession {
     const next = createSession(session.input);
     return { ...next, marks: cost };
   }
+  if (session.outcome !== "playing") {
+    return session;
+  }
+  if (command === "blame") {
+    return {
+      ...session,
+      marks: session.marks + cost,
+      lastPeek: { path: peekPath(session) },
+    };
+  }
   if (command === "good" || command === "bad") {
     const bisect = mark(session.bisect, command);
     return {
@@ -95,6 +133,7 @@ export function dispatch(session: GameSession, command: string): GameSession {
       bisect,
       marks: session.marks + cost,
       lastResult: suiteAtCurrent(bisect),
+      lastPeek: null,
     };
   }
   const bisect = accuse(session.bisect);
@@ -107,6 +146,7 @@ export function dispatch(session: GameSession, command: string): GameSession {
     bisect,
     marks: session.marks + cost,
     lastResult: suiteAtCurrent(bisect),
+    lastPeek: null,
     outcome: accused === session.generated.firstBad ? "won" : "lost",
   };
 }

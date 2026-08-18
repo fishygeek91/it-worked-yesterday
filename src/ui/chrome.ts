@@ -42,9 +42,37 @@ function caseName(session: GameSession): string {
 }
 
 /**
+ * Last blame line. Path only — the hunk stays on the win exhibit.
+ *
+ * @param session - Current session
+ */
+function peekCopy(session: GameSession): string {
+  if (session.lastPeek === null) {
+    return "";
+  }
+  if (session.lastPeek.path === null) {
+    return `<p class="peek">Peek: no path changed.</p>`;
+  }
+  return `<p class="peek">Peek: ${escapeHtml(session.lastPeek.path)}</p>`;
+}
+
+/**
+ * Case-file help. Hidden after a win so the exhibit stays the headline.
+ */
+function helpCopy(): string {
+  return [
+    `<details class="help">`,
+    `<summary>?</summary>`,
+    `<p>g good · b bad · l blame · a accuse · r reset</p>`,
+    `<p>Blame costs two marks. It names the path that changed since the last green, not the SHA.</p>`,
+    `</details>`,
+  ].join("");
+}
+
+/**
  * One command button. Cost comes from `costOf` only.
  *
- * @param command - v1 command
+ * @param command - Session command
  * @param enabled - Whether the control is live
  */
 function commandButton(command: SessionCommand, enabled: boolean): string {
@@ -172,7 +200,9 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
         `<p class="teach">When one SHA remains, accuse it.</p>`,
         `</div>`,
       ].join("")
-    : "";
+    : isYesterdayInput(session.input)
+      ? `<div class="brief"><p class="teach">HEAD is red. It worked sixteen suspects back.</p></div>`
+      : "";
   const query = shareUrl(session);
   const share =
     !isTutorialInput(session.input) && !isYesterdayInput(session.input)
@@ -198,8 +228,9 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     `</div>`,
     doors,
     `<div class="desk">`,
-    `<p class="checkout"><span class="sha">${escapeHtml(shortSha)}</span> ${escapeHtml(current.message)}</p>`,
+    `<p class="checkout"><button type="button" class="sha" data-copy="${escapeHtml(current.sha)}">${escapeHtml(shortSha)}</button> ${escapeHtml(current.message)}</p>`,
     `<p class="room" data-tone="${roomTone}">${roomCopy(session)}</p>`,
+    peekCopy(session),
     `<p class="range">Remaining suspects: ${String(remaining)}.</p>`,
     `<div class="meter" aria-hidden="true"><span style="width:${String(meterPct)}%"></span></div>`,
     `<p class="fairness">The clock is marks, not wall time. The suite does not mark for you.</p>`,
@@ -208,10 +239,12 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     `<div class="actions">`,
     commandButton("good", searching),
     commandButton("bad", searching),
+    commandButton("blame", searching || canAccuse),
     commandButton("accuse", canAccuse),
     commandButton("reset", true),
     `</div>`,
-    `<p class="keys">g good · b bad · a accuse · r reset</p>`,
+    `<p class="keys">g good · b bad · l blame · a accuse · r reset</p>`,
+    helpCopy(),
     `</div>`,
     `</section>`,
   ].join("");

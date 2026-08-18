@@ -94,9 +94,9 @@ describe("dispatch", () => {
     expect(resetAfterWin.outcome).toBe("playing");
   });
 
-  it("rejects unknown and reserved commands", () => {
+  it("rejects checkout and unknown commands", () => {
     const session = createSession(TUTORIAL);
-    for (const command of ["blame", "checkout", "attack"]) {
+    for (const command of ["checkout", "attack"]) {
       try {
         dispatch(session, command);
         expect.fail(`${command} should throw`);
@@ -107,5 +107,28 @@ describe("dispatch", () => {
         }
       }
     }
+  });
+
+  it("blames the red midpoint without moving the range", () => {
+    const started = createSession(TUTORIAL);
+    const blamed = dispatch(started, "blame");
+    expect(blamed.lastPeek).toEqual({ path: "src/collect.ts" });
+    expect(blamed.marks).toBe(costOf("blame"));
+    expect(blamed.bisect.current).toBe(started.bisect.current);
+    expect(blamed.bisect.knownGood).toBe(started.bisect.knownGood);
+    expect(blamed.bisect.knownBad).toBe(started.bisect.knownBad);
+    expect(blamed.lastResult).toEqual(started.lastResult);
+  });
+
+  it("blames a clean lamp as no path and forgets the peek on reset", () => {
+    const started = createSession(TUTORIAL);
+    const afterBad = dispatch(started, "bad");
+    expect(afterBad.lastResult.ok).toBe(true);
+    const blamed = dispatch(afterBad, "blame");
+    expect(blamed.lastPeek).toEqual({ path: null });
+    expect(blamed.marks).toBe(costOf("bad") + costOf("blame"));
+    const reset = dispatch(blamed, "reset");
+    expect(reset.lastPeek).toBeNull();
+    expect(reset.marks).toBe(costOf("reset"));
   });
 });

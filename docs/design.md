@@ -52,7 +52,7 @@ Do not invent a combat system, inventory, LLM, backend, auth, or a real git/WASM
 
 The player may mark against the suite. That is a bad investigation. They can accuse the wrong SHA and lose. The engine does not auto-mark.
 
-### Commands (v1 only)
+### Commands
 
 | Command | Meaning | Enabled |
 | --- | --- | --- |
@@ -60,8 +60,9 @@ The player may mark against the suite. That is a bad investigation. They can acc
 | `bad` | Mark current bad | While searching |
 | `reset` | Restart this seed | Always |
 | `accuse` | Name the remaining SHA | Only when the range is a single commit |
+| `blame` | Cost-2 peek: which path changed since the last green | While searching or ready to accuse |
 
-Do not build `blame` or `checkout <sha>` in v1. Reserve them in the score table and the command union so v1.1 can land without inventing costs at call sites.
+`blame` names a path only. The line hunk stays on the win exhibit. Do not build `checkout <sha>` yet. It stays reserved in the score table.
 
 ### Work clock
 
@@ -299,7 +300,7 @@ Win card: 1200×630, guilty SHA lit, `marks / optimal`, seed in the corner.
 ### v1 (build this)
 
 - Linear graphs only
-- Commands: `good`, `bad`, `reset`, `accuse`
+- Commands: `good`, `bad`, `reset`, `accuse` (v1.1 adds `blame`)
 - Three levels: tutorial, yesterday, seeded
 - Eight authored mutations
 - 200-seed fuzz bar
@@ -308,10 +309,10 @@ Win card: 1200×630, guilty SHA lit, `marks / optimal`, seed in the corner.
 - 1200×630 win card (static, screenshotable)
 - GitHub Pages later (do not enable in the first session)
 
-### v1.1 (do not build now; leave room)
+### v1.1
 
-- `blame` — costly peek: which path changed
-- `checkout <sha>` — penalty move that can leave the range
+- `blame` — shipped: costly peek at which path changed
+- `checkout <sha>` — do not build; penalty move that can leave the range
 
 ### v2 (do not build now; do not design toward it in code)
 
