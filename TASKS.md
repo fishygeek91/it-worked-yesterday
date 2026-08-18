@@ -241,14 +241,14 @@ Human-authorized 2026-08-18. Scope is the v2.0 section of [docs/design.md](docs/
 
 ### TASK 21 — Transcript resume
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 5, TASK 19
 - **Deliverables:** URL param `t` over the alphabet `g`/`b`/`l`. Replay through `dispatch` from a fresh dungeon; the restored range, checkout, clock, and ledger are whatever the replay says. Share link carries `t` while searching, `marks` after an accuse.
 - **Acceptance:**
-  - [ ] `?l=seeded&n=32&seed=1729&t=gbg` restores the exact range, checkout, clock, and ledger of dispatching those commands live.
-  - [ ] `t` together with `marks` throws `INVALID_URL`. Unknown letters and marks the live engine would reject throw `INVALID_URL`. No coerce, no truncation.
-  - [ ] Replay costs go through `costOf` only. Determinism: same URL → same restored state.
-  - [ ] The share control emits `t` mid-search and `marks` on a finished game. Old `marks` links keep the v1 overlay behavior.
+  - [x] `?l=seeded&n=32&seed=1729&t=gbg` restores the exact range, checkout, clock, and ledger of dispatching those commands live.
+  - [x] `t` together with `marks` throws `INVALID_URL`. Unknown letters and marks the live engine would reject throw `INVALID_URL`. No coerce, no truncation.
+  - [x] Replay costs go through `costOf` only. Determinism: same URL → same restored state.
+  - [x] The share control emits `t` mid-search and `marks` on a finished game. Old `marks` links keep the v1 overlay behavior.
 
 ### TASK 22 — Merge commits in core
 

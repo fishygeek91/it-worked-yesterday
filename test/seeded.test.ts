@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { commitAt, runSuite } from "../src/core";
 import {
+  dispatch,
   markTutorialDone,
   seededInput,
   sessionForVisit,
@@ -118,6 +119,14 @@ describe("seeded chrome", () => {
     expect(html).toContain("?l=seeded&amp;n=32&amp;seed=1729&amp;marks=5");
     expect(html).not.toContain("HEAD is red. The last green is 8 suspects back.");
     expect(html.toLowerCase()).not.toMatch(/goblin|attack|xp/);
+  });
+
+  it("emits t on the share control after a live mark", () => {
+    const started = sessionFromUrl("?l=seeded&n=32&seed=1729");
+    const marked = dispatch(started, started.lastResult.ok ? "good" : "bad");
+    const html = renderChrome(marked);
+    expect(html).toContain(`?l=seeded&amp;n=32&amp;seed=1729&amp;t=${marked.transcript}`);
+    expect(html).not.toContain("marks=");
   });
 });
 

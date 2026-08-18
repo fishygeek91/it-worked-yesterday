@@ -27,5 +27,7 @@ export {
   TUTORIAL_INPUT,
   YESTERDAY_INPUT,
   type LevelId,
+  type TranscriptLetter,
+  type UrlClock,
   type UrlState,
 } from "./url";

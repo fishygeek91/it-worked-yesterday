@@ -1,6 +1,6 @@
 import { GameError, isUint32, mulberry32 } from "../core";
 import type { GenerateInput, MutationId } from "../core";
-import { createSession, type GameSession } from "./session";
+import { createSession, dispatch, type GameSession, type SessionCommand } from "./session";
 
 /**
  * Level id in `l`. Case-sensitive. `learn` is a case file, not a dungeon.
@@ -8,16 +8,35 @@ import { createSession, type GameSession } from "./session";
 export type LevelId = "tutorial" | "yesterday" | "seeded" | "learn";
 
 /**
+ * Letters in the `t` param. Accuse is not in the alphabet: a finished
+ * game shares `marks`, a search in progress shares a save file.
+ */
+export type TranscriptLetter = "g" | "b" | "l";
+
+/**
+ * Clock on a dungeon URL. `t` and `marks` are mutually exclusive.
+ */
+export type UrlClock = { marks: number } | { transcript: string };
+
+/**
  * Parsed query. Pinned levels drop `n` and `seed`; seeded keeps both.
- * `learn` carries no marks: there is no clock to overlay on a case file.
+ * `learn` carries no clock: there is no dungeon to overlay or replay.
  */
 export type UrlState =
-  | { level: "tutorial"; marks: number }
-  | { level: "yesterday"; marks: number }
-  | { level: "seeded"; n: 32 | 64; seed: number; marks: number }
+  | ({ level: "tutorial" } & UrlClock)
+  | ({ level: "yesterday" } & UrlClock)
+  | ({ level: "seeded"; n: 32 | 64; seed: number } & UrlClock)
   | { level: "learn" };
 
-const ALLOWED_KEYS = new Set(["l", "n", "seed", "marks"]);
+const ALLOWED_KEYS = new Set(["l", "n", "seed", "marks", "t"]);
+
+const TRANSCRIPT_COMMAND: Record<TranscriptLetter, SessionCommand> = {
+  g: "good",
+  b: "bad",
+  l: "blame",
+};
+
+const TRANSCRIPT_PATTERN = /^[gbl]+$/;
 
 const EXACT_INTEGER = /^(0|[1-9]\d*)$/;
 
@@ -99,6 +118,32 @@ function parseMarks(raw: string | null): number {
     return 0;
   }
   return parseExactInteger(raw, "marks");
+}
+
+/**
+ * Parse `t`. Missing means no transcript. Empty or unknown letters throw.
+ * Why reject instead of truncate: a shortened save file would invent a
+ * different investigation.
+ *
+ * @param raw - Query value or null
+ */
+function parseTranscript(raw: string | null): string | null {
+  if (raw === null) {
+    return null;
+  }
+  if (!TRANSCRIPT_PATTERN.test(raw)) {
+    invalidUrl("invalid t");
+  }
+  return raw;
+}
+
+/**
+ * True when `letter` is in the transcript alphabet.
+ *
+ * @param letter - One character
+ */
+function isTranscriptLetter(letter: string): letter is TranscriptLetter {
+  return letter === "g" || letter === "b" || letter === "l";
 }
 
 /**
@@ -212,20 +257,29 @@ export function parseUrl(search: string): UrlState {
   if (levelRaw === "learn") {
     return { level: "learn" };
   }
-  const marks = parseMarks(params.get("marks"));
+  const transcript = parseTranscript(params.get("t"));
+  const marksRaw = params.get("marks");
+  if (transcript !== null && marksRaw !== null) {
+    invalidUrl("t and marks are mutually exclusive");
+  }
+  const clock: UrlClock =
+    transcript !== null ? { transcript } : { marks: parseMarks(marksRaw) };
   if (levelRaw === "seeded") {
     return {
       level: "seeded",
       n: parseSeededN(params.get("n")),
       seed: parseSeed(params.get("seed")),
-      marks,
+      ...clock,
     };
   }
-  return { level: levelRaw, marks };
+  if (levelRaw === "yesterday") {
+    return { level: "yesterday", ...clock };
+  }
+  return { level: "tutorial", ...clock };
 }
 
 /**
- * Serialize URL state. Order is `l`, then seeded `n`/`seed`, then `marks`.
+ * Serialize URL state. Order is `l`, then seeded `n`/`seed`, then `t` or `marks`.
  *
  * @param state - Parsed query
  */
@@ -239,34 +293,75 @@ export function serializeUrl(state: UrlState): string {
     params.set("n", String(state.n));
     params.set("seed", String(state.seed));
   }
-  params.set("marks", String(state.marks));
+  if ("transcript" in state) {
+    params.set("t", state.transcript);
+  } else {
+    params.set("marks", String(state.marks));
+  }
   return `?${params.toString()}`;
 }
 
 /**
- * Plant a fresh dungeon from a URL and overlay the displayed clock.
- * Why overlay, not replay: v1 does not encode the mark transcript.
+ * Replay `t` through the live engine. Any throw the engine would make
+ * becomes `INVALID_URL` — a broken save file is a refused share, not a
+ * coerced shorter walk.
+ *
+ * @param session - Fresh dungeon
+ * @param transcript - Letters to dispatch
+ */
+function replayTranscript(session: GameSession, transcript: string): GameSession {
+  let next = session;
+  for (const letter of transcript) {
+    if (!isTranscriptLetter(letter)) {
+      invalidUrl(`invalid t letter ${letter}`);
+    }
+    try {
+      next = dispatch(next, TRANSCRIPT_COMMAND[letter]);
+    } catch (error) {
+      if (error instanceof GameError) {
+        invalidUrl(`illegal transcript: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+  return next;
+}
+
+/**
+ * Plant a dungeon from a URL. `t` replays through `dispatch`. `marks`
+ * still overlays the displayed clock the v1 way, so old share links
+ * keep working.
  *
  * @param search - Query string
  */
 export function sessionFromUrl(search: string): GameSession {
   const state = parseUrl(search);
   const session = createSession(inputFromUrl(state));
+  if (state.level !== "learn" && "transcript" in state) {
+    return replayTranscript(session, state.transcript);
+  }
   const marks = state.level === "learn" ? 0 : state.marks;
   return { ...session, marks };
 }
 
 /**
- * Share query for this session. Marks overlay the clock; they do not replay.
+ * Share query for this session. A search in progress carries `t` so the
+ * link is a real save file. A finished game carries `marks` like v1.
+ * A session with no commands yet still uses `marks` so a fresh desk and
+ * an old overlay link serialize the same way.
  *
  * @param session - Current session
  */
 export function shareUrl(session: GameSession): string {
+  const clock: UrlClock =
+    session.outcome === "playing" && session.transcript.length > 0
+      ? { transcript: session.transcript }
+      : { marks: session.marks };
   if (sameInput(session.input, TUTORIAL_INPUT)) {
-    return serializeUrl({ level: "tutorial", marks: session.marks });
+    return serializeUrl({ level: "tutorial", ...clock });
   }
   if (sameInput(session.input, YESTERDAY_INPUT)) {
-    return serializeUrl({ level: "yesterday", marks: session.marks });
+    return serializeUrl({ level: "yesterday", ...clock });
   }
   const n = session.input.suspectCount;
   if (n !== 32 && n !== 64) {
@@ -276,6 +371,6 @@ export function shareUrl(session: GameSession): string {
     level: "seeded",
     n,
     seed: session.input.seed,
-    marks: session.marks,
+    ...clock,
   });
 }

@@ -40,6 +40,7 @@ export type LedgerEntry = {
 
 /**
  * Headless game session. The harness owns the clock; core owns the range.
+ * `transcript` is the v2.0 save file: `g`/`b`/`l` in dispatch order.
  */
 export type GameSession = {
   input: GenerateInput;
@@ -50,6 +51,7 @@ export type GameSession = {
   lastPeek: BlamePeek | null;
   ledger: readonly LedgerEntry[];
   outcome: SessionOutcome;
+  transcript: string;
 };
 
 const SESSION_COMMANDS = new Set<string>(["good", "bad", "reset", "accuse", "blame"]);
@@ -106,6 +108,7 @@ export function createSession(input: GenerateInput): GameSession {
     lastPeek: null,
     ledger: [],
     outcome: "playing",
+    transcript: "",
   };
 }
 
@@ -136,6 +139,7 @@ export function dispatch(session: GameSession, command: string): GameSession {
       ...session,
       marks: session.marks + cost,
       lastPeek: { path: peekPath(session) },
+      transcript: `${session.transcript}l`,
     };
   }
   if (command === "good" || command === "bad") {
@@ -153,6 +157,7 @@ export function dispatch(session: GameSession, command: string): GameSession {
       lastResult: suiteAtCurrent(bisect),
       lastPeek: null,
       ledger: [...session.ledger, entry],
+      transcript: `${session.transcript}${command === "good" ? "g" : "b"}`,
     };
   }
   const bisect = accuse(session.bisect);
