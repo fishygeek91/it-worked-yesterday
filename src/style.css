@@ -1,0 +1,66 @@
+:root {
+  color: #e8e2d6;
+  background: #12110f;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+#app {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+svg {
+  width: min(100vw - 4rem, 64rem);
+  height: auto;
+}
+
+main {
+  max-width: 36rem;
+}
+
+h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+p {
+  color: #b7b1a4;
+  line-height: 1.5;
+}
+
+#chrome {
+  max-width: 40rem;
+}
+
+.marks {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.25rem;
+  color: #e8e2d6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+button {
+  background: #1c1b18;
+  color: #e8e2d6;
+  border: 1px solid #3a3834;
+  padding: 0.35rem 0.7rem;
+  font: inherit;
+}
+
+button:disabled {
+  opacity: 0.4;
+}
