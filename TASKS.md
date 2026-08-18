@@ -140,12 +140,12 @@ One task per session. Do not start the next until the current task's acceptance 
 
 ### TASK 12 — Seeded share mode
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 5, TASK 2, TASK 11
 - **Deliverables:** `l=seeded`, `n` 32 or 64 from URL, mutation + first-bad from PRNG.
 - **Acceptance:**
-  - [ ] Same seed → identical history, first-bad, trees, test results.
-  - [ ] No `Math.random` or `Date.now` on this path.
+  - [x] Same seed → identical history, first-bad, trees, test results.
+  - [x] No `Math.random` or `Date.now` on this path.
 
 ## Phase 5 — e2e + readme
 

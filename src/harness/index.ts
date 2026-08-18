@@ -16,8 +16,10 @@ export {
 } from "./tutorial";
 export {
   parseUrl,
+  seededInput,
   serializeUrl,
   sessionFromUrl,
+  shareUrl,
   TUTORIAL_INPUT,
   YESTERDAY_INPUT,
   type LevelId,

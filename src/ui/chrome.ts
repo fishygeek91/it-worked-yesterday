@@ -1,7 +1,8 @@
 import { indexOfSha } from "../core/git";
 import { costOf, optimalMarks } from "../core/score";
-import { isTutorialInput } from "../harness/tutorial";
 import type { GameSession, SessionCommand } from "../harness/session";
+import { isTutorialInput, isYesterdayInput } from "../harness/tutorial";
+import { shareUrl } from "../harness/url";
 
 /**
  * Escape text for HTML text and attributes.
@@ -77,11 +78,16 @@ export function renderChrome(session: GameSession): string {
         `<p class="teach">When one SHA remains, accuse it.</p>`,
       ].join("")
     : "";
+  const share =
+    !isTutorialInput(session.input) && !isYesterdayInput(session.input)
+      ? `<p class="share">${escapeHtml(shareUrl(session))}</p>`
+      : "";
   return [
     `<section id="chrome">`,
     teach,
     `<p class="marks">${String(session.marks)} / ${String(optimal)}</p>`,
     `<p class="seed">seed ${escapeHtml(String(session.input.seed))}</p>`,
+    share,
     `<p class="room">${roomCopy(session)}</p>`,
     `<p class="range">Remaining suspects: ${String(remaining)}.</p>`,
     `<p class="fairness">The clock is marks, not wall time. The suite does not mark for you.</p>`,
