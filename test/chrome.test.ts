@@ -52,6 +52,20 @@ describe("renderChrome", () => {
     expect(html).toMatch(/data-command="reset" data-cost="[^"]+">reset<\/button>/);
   });
 
+  it("shows the commit message and the tiny diff after a win", () => {
+    const started = createSession(TUTORIAL);
+    const ready = markUntilReady(started, (current) => (current.lastResult.ok ? "good" : "bad"));
+    const won = dispatch(ready, "accuse");
+    const html = renderChrome(won, { tutorialDone: true });
+    expect(html).toContain("adjust the walk bound");
+    expect(html).toContain("src/collect.ts");
+    expect(html).toContain("i &lt; xs.length");
+    expect(html).toContain("i &lt;= xs.length");
+    expect(html).toContain("class=\"doors\"");
+    expect(html).toContain("?l=yesterday");
+    expect(html.toLowerCase()).not.toMatch(/goblin|lurk|attack|xp|loot/);
+  });
+
   it("enables accuse only when the range is a single commit", () => {
     const started = createSession(TUTORIAL);
     const ready = markUntilReady(started, (current) => (current.lastResult.ok ? "good" : "bad"));

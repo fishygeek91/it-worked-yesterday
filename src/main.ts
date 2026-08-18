@@ -1,5 +1,6 @@
 import {
   dispatch,
+  isTutorialDone,
   isTutorialInput,
   markTutorialDone,
   sessionForVisit,
@@ -67,7 +68,7 @@ function paint(): void {
   document.documentElement.dataset.outcome = session.outcome;
   const parts = [
     `<div id="map">${renderGraph(buildViewModel(session))}</div>`,
-    renderChrome(session),
+    renderChrome(session, { tutorialDone: isTutorialDone(store) }),
   ];
   if (session.outcome === "won") {
     parts.push(renderWinCard(session));
@@ -82,6 +83,14 @@ function paint(): void {
 app.addEventListener("click", (event: Event) => {
   const target = event.target;
   if (!(target instanceof Element)) {
+    return;
+  }
+  const copy = target.closest("[data-copy]");
+  if (copy instanceof HTMLButtonElement) {
+    const text = copy.getAttribute("data-copy");
+    if (text !== null && navigator.clipboard !== undefined) {
+      void navigator.clipboard.writeText(text);
+    }
     return;
   }
   const button = target.closest("[data-command]");

@@ -12,6 +12,7 @@ export {
   sliceFencepost,
   wrongFixtureValue,
 } from "./bugs";
+export { firstChangedFile, type DiffLine, type FileDiff } from "./diff";
 export { GameError, type GameErrorCode } from "./errors";
 export { generateBuggyHistory } from "./generate";
 export {

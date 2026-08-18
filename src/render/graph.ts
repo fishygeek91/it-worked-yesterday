@@ -186,7 +186,7 @@ export function renderGraph(vm: ViewModel): string {
       const short = node.sha.slice(0, 7);
       return [
         `<g data-shape="${escapeXml(node.shape)}" data-label="${escapeXml(node.label)}" data-lit="${node.lit ? "true" : "false"}" data-sha="${escapeXml(node.sha)}" opacity="${opacity}">`,
-        `<title>${escapeXml(node.sha)}</title>`,
+        `<title>${escapeXml(node.sha)} — ${escapeXml(node.message)}</title>`,
         roomGeometry(node, at, fill, rim),
         `<text x="${String(at.x)}" y="${String(at.y + 34)}" text-anchor="middle" fill="#e8e2d6" font-size="11" font-family="IBM Plex Mono, ui-monospace, monospace">${escapeXml(node.label)}</text>`,
         node.shape === "lantern"
