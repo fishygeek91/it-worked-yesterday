@@ -5,14 +5,21 @@ import {
   isTutorialDone,
   isTutorialInput,
   markTutorialDone,
-  sessionForVisit,
+  visitForSearch,
   type GameSession,
   type SessionCommand,
   type TutorialStore,
 } from "./harness";
 import { buildViewModel, renderGraph } from "./render";
 import "./style.css";
-import { renderBadUrl, renderChrome, renderWinCard } from "./ui";
+import {
+  learnWalkNext,
+  learnWalkStart,
+  renderBadUrl,
+  renderChrome,
+  renderLearn,
+  renderWinCard,
+} from "./ui";
 
 const found = document.querySelector("#app");
 if (!(found instanceof HTMLElement)) {
@@ -28,20 +35,26 @@ const store: TutorialStore = {
 };
 
 /**
- * Boot result. Invalid shares stay a postmortem; they are not coerced.
+ * Boot result. Learn is a case file with its own demonstration walk.
+ * Invalid shares stay a postmortem; they are not coerced.
  */
 type Boot =
   | { kind: "play"; session: GameSession }
+  | { kind: "learn"; walk: GameSession }
   | { kind: "bad-url"; error: GameError };
 
 /**
- * Plant a visit or keep the parser failure for the desk.
+ * Route a visit or keep the parser failure for the desk.
  *
  * @param search - Location search
  */
 function bootVisit(search: string): Boot {
   try {
-    return { kind: "play", session: sessionForVisit(search, store) };
+    const visit = visitForSearch(search, store);
+    if (visit.kind === "learn") {
+      return { kind: "learn", walk: learnWalkStart() };
+    }
+    return { kind: "play", session: visit.session };
   } catch (error) {
     if (error instanceof GameError && error.code === "INVALID_URL") {
       return { kind: "bad-url", error };
@@ -106,6 +119,12 @@ function paint(): void {
     document.documentElement.dataset.outcome = "invalid";
     document.title = "invalid url — it-worked-yesterday";
     app.innerHTML = renderBadUrl(boot.error, { tutorialDone: isTutorialDone(store) });
+    return;
+  }
+  if (boot.kind === "learn") {
+    document.documentElement.dataset.outcome = "learn";
+    document.title = "learn — it-worked-yesterday";
+    app.innerHTML = renderLearn(boot.walk);
     return;
   }
   const session = boot.session;
@@ -174,6 +193,19 @@ app.addEventListener("click", (event: Event) => {
       void navigator.clipboard.writeText(text);
     }
     flashCopied(copy);
+    return;
+  }
+  const learnButton = target.closest("[data-learn]");
+  if (learnButton instanceof HTMLButtonElement && !learnButton.disabled) {
+    if (boot.kind !== "learn") {
+      return;
+    }
+    const step = learnButton.getAttribute("data-learn");
+    boot = {
+      kind: "learn",
+      walk: step === "reset" ? learnWalkStart() : learnWalkNext(boot.walk),
+    };
+    paint();
     return;
   }
   const button = target.closest("[data-command]");

@@ -3,17 +3,19 @@ import type { GenerateInput, MutationId } from "../core";
 import { createSession, type GameSession } from "./session";
 
 /**
- * Level id in `l`. Case-sensitive.
+ * Level id in `l`. Case-sensitive. `learn` is a case file, not a dungeon.
  */
-export type LevelId = "tutorial" | "yesterday" | "seeded";
+export type LevelId = "tutorial" | "yesterday" | "seeded" | "learn";
 
 /**
  * Parsed query. Pinned levels drop `n` and `seed`; seeded keeps both.
+ * `learn` carries no marks: there is no clock to overlay on a case file.
  */
 export type UrlState =
   | { level: "tutorial"; marks: number }
   | { level: "yesterday"; marks: number }
-  | { level: "seeded"; n: 32 | 64; seed: number; marks: number };
+  | { level: "seeded"; n: 32 | 64; seed: number; marks: number }
+  | { level: "learn" };
 
 const ALLOWED_KEYS = new Set(["l", "n", "seed", "marks"]);
 
@@ -65,7 +67,9 @@ function invalidUrl(message: string): never {
  * @param value - Raw `l`
  */
 function isLevelId(value: string): value is LevelId {
-  return value === "tutorial" || value === "yesterday" || value === "seeded";
+  return (
+    value === "tutorial" || value === "yesterday" || value === "seeded" || value === "learn"
+  );
 }
 
 /**
@@ -163,11 +167,15 @@ function sameInput(left: GenerateInput, right: GenerateInput): boolean {
 }
 
 /**
- * Map parsed URL state to a generate input.
+ * Map parsed URL state to a generate input. `learn` refuses: it has no
+ * history to plant, and coercing it into one would invent a fourth dungeon.
  *
  * @param state - Parsed query
  */
 function inputFromUrl(state: UrlState): GenerateInput {
+  if (state.level === "learn") {
+    invalidUrl("learn is not a dungeon");
+  }
   if (state.level === "tutorial") {
     return TUTORIAL_INPUT;
   }
@@ -201,6 +209,9 @@ export function parseUrl(search: string): UrlState {
   if (!isLevelId(levelRaw)) {
     invalidUrl(`invalid l ${levelRaw}`);
   }
+  if (levelRaw === "learn") {
+    return { level: "learn" };
+  }
   const marks = parseMarks(params.get("marks"));
   if (levelRaw === "seeded") {
     return {
@@ -219,6 +230,9 @@ export function parseUrl(search: string): UrlState {
  * @param state - Parsed query
  */
 export function serializeUrl(state: UrlState): string {
+  if (state.level === "learn") {
+    return "?l=learn";
+  }
   const params = new URLSearchParams();
   params.set("l", state.level);
   if (state.level === "seeded") {
@@ -238,7 +252,8 @@ export function serializeUrl(state: UrlState): string {
 export function sessionFromUrl(search: string): GameSession {
   const state = parseUrl(search);
   const session = createSession(inputFromUrl(state));
-  return { ...session, marks: state.marks };
+  const marks = state.level === "learn" ? 0 : state.marks;
+  return { ...session, marks };
 }
 
 /**

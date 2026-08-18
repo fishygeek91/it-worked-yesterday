@@ -1,6 +1,6 @@
 import type { GenerateInput } from "../core";
 import type { GameSession } from "./session";
-import { sessionFromUrl, TUTORIAL_INPUT, YESTERDAY_INPUT } from "./url";
+import { parseUrl, sessionFromUrl, TUTORIAL_INPUT, YESTERDAY_INPUT } from "./url";
 
 /**
  * Client persistence for tutorial completion. Not part of the seed.
@@ -73,18 +73,42 @@ function isEmptySearch(search: string): boolean {
 }
 
 /**
- * Plant a session for this visit. Unseen players cannot skip the tutorial.
- * After that, an empty query is yesterday (the last free-play).
+ * What one page load is: a live dungeon or the learn case file.
+ */
+export type Visit = { kind: "play"; session: GameSession } | { kind: "learn" };
+
+/**
+ * Route one page load. Unseen players cannot skip the tutorial — not even
+ * into the learn case file. After that, an empty query is yesterday and
+ * `l=learn` opens the case file without planting a history.
+ *
+ * @param search - Location search
+ * @param store - Persistence
+ */
+export function visitForSearch(search: string, store: TutorialStore): Visit {
+  if (!isTutorialDone(store)) {
+    return { kind: "play", session: sessionFromUrl("?l=tutorial") };
+  }
+  if (isEmptySearch(search)) {
+    return { kind: "play", session: sessionFromUrl("?l=yesterday") };
+  }
+  if (parseUrl(search).level === "learn") {
+    return { kind: "learn" };
+  }
+  return { kind: "play", session: sessionFromUrl(search) };
+}
+
+/**
+ * Plant a session for this visit. Play-only wrapper over `visitForSearch`;
+ * a learn visit has no session and refuses here.
  *
  * @param search - Location search
  * @param store - Persistence
  */
 export function sessionForVisit(search: string, store: TutorialStore): GameSession {
-  if (!isTutorialDone(store)) {
-    return sessionFromUrl("?l=tutorial");
+  const visit = visitForSearch(search, store);
+  if (visit.kind !== "play") {
+    return sessionFromUrl(search);
   }
-  if (isEmptySearch(search)) {
-    return sessionFromUrl("?l=yesterday");
-  }
-  return sessionFromUrl(search);
+  return visit.session;
 }

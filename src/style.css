@@ -509,6 +509,135 @@ p {
   line-height: 1.5;
 }
 
+#learn {
+  display: grid;
+  gap: 0.9rem;
+}
+
+#learn .doors {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 0.6rem 0;
+  background: linear-gradient(#0d0c0b 78%, transparent);
+}
+
+.learn {
+  display: grid;
+  gap: 1.4rem;
+  max-width: 46rem;
+}
+
+.learn-lede {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--amber);
+  background: #1b1712;
+  color: var(--ink);
+  font-size: 1.2rem;
+}
+
+.learn-section {
+  display: grid;
+  gap: 0.6rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--line);
+}
+
+.learn-section h2 {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.learn-section p {
+  margin: 0;
+  color: #d2cbbd;
+  line-height: 1.55;
+}
+
+.learn-section a {
+  color: var(--amber-rim);
+}
+
+.learn-exhibit {
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.learn-map {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #12110f;
+  box-shadow: inset 0 0 60px #0008;
+}
+
+.learn-map svg {
+  display: block;
+  width: max(100%, 30rem);
+  height: auto;
+  min-height: 9rem;
+}
+
+.learn-exhibit figcaption {
+  color: var(--mute);
+  font-size: 0.9rem;
+}
+
+.learn-walk-note {
+  padding: 0.55rem 0.85rem;
+  border-left: 3px solid var(--slate);
+  background: #14181c;
+}
+
+.learn-walk-marks {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.4rem;
+  color: var(--ink);
+}
+
+.learn-walk-status {
+  color: var(--ink);
+}
+
+.learn-clock {
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.learn-clock th,
+.learn-clock td {
+  padding: 0.35rem 0.9rem 0.35rem 0;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  color: #d2cbbd;
+}
+
+.learn-clock th {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.learn-clock td:first-child,
+.learn-mutation-name {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--amber);
+}
+
+.learn-mutation {
+  margin: 0;
+}
+
 #win-card {
   position: relative;
   box-sizing: border-box;

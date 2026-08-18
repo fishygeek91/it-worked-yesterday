@@ -45,6 +45,26 @@ describe("parseUrl / serializeUrl", () => {
     expectInvalidUrl("?l=seeded&n=32&seed=1729&marks=5&foo=1");
     expectInvalidUrl("?marks=5");
   });
+
+  it("parses learn as a case file with no clock", () => {
+    expect(parseUrl("?l=learn")).toEqual({ level: "learn" });
+    expect(serializeUrl({ level: "learn" })).toBe("?l=learn");
+    expectInvalidUrl("?l=Learn");
+  });
+});
+
+describe("sessionFromUrl learn", () => {
+  it("refuses to plant a dungeon for the case file", () => {
+    try {
+      sessionFromUrl("?l=learn");
+      expect.fail("learn must not become a dungeon");
+    } catch (error) {
+      expect(error).toBeInstanceOf(GameError);
+      if (error instanceof GameError) {
+        expect(error.code).toBe("INVALID_URL");
+      }
+    }
+  });
 });
 
 describe("sessionFromUrl", () => {

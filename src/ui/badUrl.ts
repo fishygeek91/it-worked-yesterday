@@ -1,5 +1,5 @@
 import { GameError } from "../core/errors";
-import type { ChromeVisit } from "./chrome";
+import { renderDoors, type ChromeVisit } from "./chrome";
 
 /**
  * Escape text for HTML text and attributes.
@@ -27,14 +27,7 @@ export function renderBadUrl(error: GameError, visit?: ChromeVisit): string {
   }
   const doors =
     visit !== undefined && visit.tutorialDone
-      ? [
-          `<nav class="doors" aria-label="cases">`,
-          `<a class="door" href="?l=tutorial">Tutorial</a>`,
-          `<a class="door" href="?l=yesterday">Yesterday</a>`,
-          `<a class="door" href="?l=seeded&n=32&seed=1729">Seeded 32</a>`,
-          `<a class="door" href="?l=seeded&n=64&seed=1729">Seeded 64</a>`,
-          `</nav>`,
-        ].join("")
+      ? renderDoors({ current: "none", seed: 1729 })
       : `<nav class="doors" aria-label="cases"><a class="door" href="?l=tutorial">Tutorial</a></nav>`;
   return [
     `<section id="chrome" data-phase="invalid">`,

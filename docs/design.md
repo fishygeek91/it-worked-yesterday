@@ -103,6 +103,8 @@ Tutorial and Yesterday pin first-bad and mutation. Seeded picks both from the se
 
 Tutorial completion lives in `localStorage` under `iwy.tutorialDone = "1"`. That is the only client persistence in v1. It is not part of the seed.
 
+`learn` is a fourth `l` value but not a fourth level. It is a case-file page: the rules, the clock, frozen hallway exhibits, and one honest-walk demonstration on the pinned tutorial dungeon. It plants no history of its own, and unseen visitors are still routed to the tutorial first.
+
 ## URL schema
 
 All of it, deterministic:
@@ -113,7 +115,7 @@ All of it, deterministic:
 
 | Param | Type | Rules |
 | --- | --- | --- |
-| `l` | `"tutorial" \| "yesterday" \| "seeded"` | Required when any query is present. Default with no query: `tutorial` if unseen, else last free-play choice. |
+| `l` | `"tutorial" \| "yesterday" \| "seeded" \| "learn"` | Required when any query is present. Default with no query: `tutorial` if unseen, else last free-play choice. `learn` opens the case-file page; it ignores `n`, `seed`, and `marks` and plants no dungeon. |
 | `n` | integer | Ignored for tutorial (8) and yesterday (16). For seeded: only `32` or `64`. |
 | `seed` | uint32 | Integer in `[0, 4294967295]`. Required for seeded. Ignored for pinned levels (those levels use a pinned internal seed so fixtures stay still). |
 | `marks` | integer `>= 0` | Work clock for the share card and the chrome. Not a second history. |
