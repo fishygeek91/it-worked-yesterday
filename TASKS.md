@@ -284,11 +284,11 @@ Human-authorized 2026-08-18. Scope is the v2.0 section of [docs/design.md](docs/
 
 ### TASK 25 — Merged level
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 21, TASK 23, TASK 24
 - **Deliverables:** `l=merged` pinned level per the design table: n=32, one diamond, first-bad pinned on the branch lane, `missingReturn`, pinned internal seed. Door in the cabinet. e2e: merged is winnable by marking what the room said; the win card and share kit work on the diamond.
 - **Acceptance:**
-  - [ ] `?l=merged` parses; it ignores `n` and `seed`; `?l=Merged` throws `INVALID_URL`.
-  - [ ] Unseen visitors are still routed to the tutorial first.
-  - [ ] e2e wins without importing mutations, driving the UI only.
-  - [ ] The win card stays 1200×630 with the guilty SHA lit; `save card` still downloads a PNG.
+  - [x] `?l=merged` parses; it ignores `n` and `seed`; `?l=Merged` throws `INVALID_URL`.
+  - [x] Unseen visitors are still routed to the tutorial first.
+  - [x] e2e wins without importing mutations, driving the UI only.
+  - [x] The win card stays 1200×630 with the guilty SHA lit; `save card` still downloads a PNG.

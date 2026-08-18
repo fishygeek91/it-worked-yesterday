@@ -75,9 +75,9 @@ describe("sessionForVisit yesterday", () => {
     const session = sessionForVisit(YESTERDAY, doneStore());
     expect(session.input).toEqual(YESTERDAY_INPUT);
     expect(isYesterdayInput(session.input)).toBe(true);
-    expect(session.input.firstBadIndex).toBe(14);
-    expect(session.input.firstBadIndex).toBeGreaterThanOrEqual(
-      (session.input.suspectCount * 3) / 4,
+    expect(session.input).toMatchObject({ firstBadIndex: 14 });
+    expect(YESTERDAY_INPUT.firstBadIndex).toBeGreaterThanOrEqual(
+      (YESTERDAY_INPUT.suspectCount * 3) / 4,
     );
     expect(session.input.mutation).toBe("flippedBoolean");
     expect(indexOfSha(session.generated.repo, session.generated.firstBad)).toBe(15);

@@ -64,6 +64,13 @@ describe("parseUrl / serializeUrl", () => {
     expect(serializeUrl({ level: "learn" })).toBe("?l=learn");
     expectInvalidUrl("?l=Learn");
   });
+
+  it("parses merged and ignores n and seed; rejects Merged", () => {
+    expect(parseUrl("?l=merged")).toEqual({ level: "merged", marks: 0 });
+    expect(parseUrl("?l=merged&n=64&seed=99")).toEqual({ level: "merged", marks: 0 });
+    expect(serializeUrl({ level: "merged", marks: 0 })).toBe("?l=merged&marks=0");
+    expectInvalidUrl("?l=Merged");
+  });
 });
 
 describe("sessionFromUrl learn", () => {
@@ -104,10 +111,12 @@ describe("sessionFromUrl", () => {
 
   it("ignores n and seed on the pinned tutorial", () => {
     const session = sessionFromUrl("?l=tutorial&n=32&seed=99");
-    expect(session.input.suspectCount).toBe(8);
-    expect(session.input.firstBadIndex).toBe(3);
-    expect(session.input.seed).toBe(1729);
-    expect(session.input.mutation).toBe("offByOneLoopBound");
+    expect(session.input).toEqual({
+      suspectCount: 8,
+      firstBadIndex: 3,
+      seed: 1729,
+      mutation: "offByOneLoopBound",
+    });
     expect(indexOfSha(session.generated.repo, session.generated.firstBad)).toBe(4);
     expect(session.marks).toBe(0);
   });

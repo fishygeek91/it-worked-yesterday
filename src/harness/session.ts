@@ -5,11 +5,32 @@ import {
   firstChangedFile,
   GameError,
   generateBuggyHistory,
+  generateDiamondHistory,
   mark,
   runSuite,
   start,
 } from "../core";
-import type { BisectState, GeneratedHistory, GenerateInput, SuiteResult } from "../core";
+import type {
+  BisectState,
+  DiamondGenerateInput,
+  GeneratedHistory,
+  GenerateInput,
+  SuiteResult,
+} from "../core";
+
+/**
+ * Plant pin. Linear levels use `GenerateInput`; the diamond uses the v2.0 pin.
+ */
+export type SessionInput = GenerateInput | DiamondGenerateInput;
+
+/**
+ * True when this pin plants the one diamond.
+ *
+ * @param input - Session pin
+ */
+export function isDiamondInput(input: SessionInput): input is DiamondGenerateInput {
+  return "firstBadLane" in input;
+}
 
 /**
  * Session commands. `blame` is the v1.1 peek; `checkout` stays reserved.
@@ -43,7 +64,7 @@ export type LedgerEntry = {
  * `transcript` is the v2.0 save file: `g`/`b`/`l` in dispatch order.
  */
 export type GameSession = {
-  input: GenerateInput;
+  input: SessionInput;
   generated: GeneratedHistory;
   bisect: BisectState;
   marks: number;
@@ -94,10 +115,10 @@ function peekPath(session: GameSession): string | null {
 /**
  * Plant a dungeon and start at the first midpoint. Marks start at zero.
  *
- * @param input - Seed, n, first-bad index, mutation
+ * @param input - Linear pin or the v2.0 diamond pin
  */
-export function createSession(input: GenerateInput): GameSession {
-  const generated = generateBuggyHistory(input);
+export function createSession(input: SessionInput): GameSession {
+  const generated = isDiamondInput(input) ? generateDiamondHistory(input) : generateBuggyHistory(input);
   const bisect = start(generated.repo, generated.knownGood, generated.knownBad);
   return {
     input,

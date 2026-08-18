@@ -1,13 +1,16 @@
 export {
   createSession,
   dispatch,
+  isDiamondInput,
   type BlamePeek,
   type GameSession,
   type LedgerEntry,
   type SessionCommand,
+  type SessionInput,
   type SessionOutcome,
 } from "./session";
 export {
+  isMergedInput,
   isTutorialDone,
   isTutorialInput,
   isYesterdayInput,
@@ -19,6 +22,7 @@ export {
   type Visit,
 } from "./tutorial";
 export {
+  MERGED_INPUT,
   parseUrl,
   seededInput,
   serializeUrl,
