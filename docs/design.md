@@ -52,6 +52,8 @@ Do not invent a combat system, inventory, LLM, backend, auth, or a real git/WASM
 
 The player may mark against the suite. That is a bad investigation. They can accuse the wrong SHA and lose. The engine does not auto-mark.
 
+Every mark is written to a session-only interview ledger: the room SHA, what the player said, what the suite said. On a loss the desk reads the record back and flags each line that argued with the suite, so the loss teaches instead of just filing. The ledger is not persisted and clears on `reset`.
+
 ### Commands
 
 | Command | Meaning | Enabled |

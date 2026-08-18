@@ -117,6 +117,34 @@ function outcomeCopy(session: GameSession): string {
 }
 
 /**
+ * The interview record, read back only on a loss. Every mark is a line:
+ * the room, what the player said, what the suite said. A lost case always
+ * contains at least one argument with the suite — this is where it shows.
+ *
+ * @param session - Current session
+ */
+function ledgerCopy(session: GameSession): string {
+  if (session.outcome !== "lost" || session.ledger.length === 0) {
+    return "";
+  }
+  const lines = session.ledger
+    .map((entry) => {
+      const suite = entry.suiteOk ? "green" : "red";
+      const lied = entry.suiteOk !== (entry.said === "good");
+      const cls = lied ? "ledger-line is-lie" : "ledger-line";
+      return `<li class="${cls}"><span class="ledger-sha">${escapeHtml(entry.sha.slice(0, 7))}</span> — you said ${entry.said}. The suite said ${suite}.</li>`;
+    })
+    .join("");
+  return [
+    `<aside class="ledger">`,
+    `<p class="ledger-head">The interview record.</p>`,
+    `<ol class="ledger-lines">${lines}</ol>`,
+    `<p class="ledger-note">Read it back. Somewhere in here you argued with the suite.</p>`,
+    `</aside>`,
+  ].join("");
+}
+
+/**
  * Next uint32 seed. Wrap, do not read the wall clock.
  *
  * @param seed - Current seed
@@ -294,6 +322,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     `<div class="meter" aria-hidden="true"><span style="width:${String(meterPct)}%"></span></div>`,
     `<p class="fairness">The clock is marks, not wall time. The suite does not mark for you.</p>`,
     outcomeBlock,
+    ledgerCopy(session),
     exhibit,
     `<div class="actions">`,
     commandButton("good", searching),
