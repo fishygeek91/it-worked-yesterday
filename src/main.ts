@@ -19,6 +19,10 @@ import {
   renderChrome,
   renderLearn,
   renderWinCard,
+  renderWinCardSvg,
+  shareQuery,
+  shareText,
+  winCardFileName,
 } from "./ui";
 
 const found = document.querySelector("#app");
@@ -181,9 +185,80 @@ function flashCopied(copy: HTMLElement): void {
   }, 900);
 }
 
+/**
+ * Absolute share link for this page. The origin is page state, not seed
+ * state, so it lives here and not in the pure chrome.
+ *
+ * @param session - Finished winning session
+ */
+function shareLink(session: GameSession): string {
+  return `${window.location.origin}${window.location.pathname}${shareQuery(session)}`;
+}
+
+/**
+ * Rasterize the standalone win-card SVG to a 1200×630 PNG and download it.
+ * The SVG has no external references, so the canvas stays untainted.
+ *
+ * @param session - Finished winning session
+ */
+function saveCardPng(session: GameSession): void {
+  const svg = renderWinCardSvg(session);
+  const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+  const image = new Image();
+  image.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1200;
+    canvas.height = 630;
+    const context = canvas.getContext("2d");
+    if (context === null) {
+      URL.revokeObjectURL(svgUrl);
+      return;
+    }
+    context.drawImage(image, 0, 0, 1200, 630);
+    URL.revokeObjectURL(svgUrl);
+    canvas.toBlob((png) => {
+      if (png === null) {
+        return;
+      }
+      const pngUrl = URL.createObjectURL(png);
+      const anchor = document.createElement("a");
+      anchor.href = pngUrl;
+      anchor.download = winCardFileName(session);
+      anchor.click();
+      // Revoke after the click has been consumed by the download.
+      window.setTimeout(() => {
+        URL.revokeObjectURL(pngUrl);
+      }, 1000);
+    }, "image/png");
+  };
+  image.onerror = () => {
+    URL.revokeObjectURL(svgUrl);
+  };
+  image.src = svgUrl;
+}
+
 app.addEventListener("click", (event: Event) => {
   const target = event.target;
   if (!(target instanceof Element)) {
+    return;
+  }
+  const shareResult = target.closest("[data-share-result]");
+  if (shareResult instanceof HTMLElement) {
+    if (boot.kind === "play" && boot.session.outcome === "won") {
+      const text = `${shareText(boot.session)}\n${shareLink(boot.session)}`;
+      if (navigator.clipboard !== undefined) {
+        void navigator.clipboard.writeText(text);
+      }
+      flashCopied(shareResult);
+    }
+    return;
+  }
+  const saveCard = target.closest("[data-save-card]");
+  if (saveCard instanceof HTMLElement) {
+    if (boot.kind === "play" && boot.session.outcome === "won") {
+      saveCardPng(boot.session);
+    }
     return;
   }
   const copy = target.closest("[data-copy]");

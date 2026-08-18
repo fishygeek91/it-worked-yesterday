@@ -1,5 +1,12 @@
 export { renderBadUrl } from "./badUrl";
-export { renderChrome, renderDoors, winExhibit, type ChromeVisit, type OpenCase } from "./chrome";
+export {
+  caseName,
+  renderChrome,
+  renderDoors,
+  winExhibit,
+  type ChromeVisit,
+  type OpenCase,
+} from "./chrome";
 export { renderLearn } from "./learn";
 export {
   learnExhibits,
@@ -9,3 +16,4 @@ export {
   type LearnExhibit,
 } from "./learnExhibits";
 export { renderWinCard } from "./winCard";
+export { renderWinCardSvg, shareQuery, shareText, winCardFileName } from "./shareKit";

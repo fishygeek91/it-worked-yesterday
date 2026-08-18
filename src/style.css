@@ -194,6 +194,12 @@ body::after {
   border-color: var(--amber);
 }
 
+.sharekit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
 .clock-note {
   margin: 0;
   font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
