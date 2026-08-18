@@ -15,5 +15,13 @@ export {
   renderWalkGraph,
   type LearnExhibit,
 } from "./learnExhibits";
+export {
+  CUE_SPECS,
+  cueForCommand,
+  playCue,
+  renderSoundLatch,
+  type CueSpec,
+  type SoundCue,
+} from "./sound";
 export { renderWinCard } from "./winCard";
 export { renderWinCardSvg, shareQuery, shareText, winCardFileName } from "./shareKit";

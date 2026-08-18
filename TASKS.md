@@ -335,14 +335,14 @@ Human-authorized 2026-08-18 by chat charter. Scope is the v2.1 section of [docs/
 
 ### TASK 29 — Sound latch
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 8
 - **Deliverables:** `src/ui/sound.ts`: Web Audio cues (good mark, bad mark, win, loss, reset) synthesized in code — no assets, no runtime dependency. Muted by default with one latch in the chrome (page memory, like help). `AudioContext` created on the unmute gesture only.
 - **Acceptance:**
-  - [ ] Muted by default; one latch toggles it; no sound plays before the unmute gesture (no autoplay surprise).
-  - [ ] Cues are synthesized; no asset files; no runtime dependency, so no `DEVIATIONS.md` entry needed.
-  - [ ] `src/core` and `src/harness` are untouched — still no `Date.now`/`Math.random` there; the latch never changes `marks`.
-  - [ ] The latch renders in the chrome and toggling it does not dispatch a command.
+  - [x] Muted by default; one latch toggles it; no sound plays before the unmute gesture (no autoplay surprise).
+  - [x] Cues are synthesized; no asset files; no runtime dependency, so no `DEVIATIONS.md` entry needed.
+  - [x] `src/core` and `src/harness` are untouched — still no `Date.now`/`Math.random` there; the latch never changes `marks`.
+  - [x] The latch renders in the chrome and toggling it does not dispatch a command.
 
 ### TASK 30 — GIF export
 

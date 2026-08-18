@@ -384,6 +384,22 @@ body::after {
   cursor: pointer;
 }
 
+.latch {
+  background: none;
+  border: 1px solid var(--mute);
+  border-radius: 4px;
+  color: var(--mute);
+  cursor: pointer;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+}
+
+.latch[aria-pressed="true"] {
+  border-color: var(--amber-rim);
+  color: var(--amber-rim);
+}
+
 .range,
 .fairness,
 .keys {

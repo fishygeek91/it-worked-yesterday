@@ -12,6 +12,7 @@ import {
   isYesterdayInput,
 } from "../harness/tutorial";
 import { shareUrl } from "../harness/url";
+import { renderSoundLatch } from "./sound";
 
 /**
  * Extra visit facts the desk needs. Not part of the seed.
@@ -19,6 +20,7 @@ import { shareUrl } from "../harness/url";
 export type ChromeVisit = {
   tutorialDone: boolean;
   helpOpen?: boolean;
+  soundOn?: boolean;
 };
 
 /**
@@ -444,6 +446,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     commandButton("reset", true),
     `</div>`,
     `<p class="keys">g good · b bad · l blame · a accuse · r reset</p>`,
+    renderSoundLatch(visit !== undefined && visit.soundOn === true),
     helpCopy(visit !== undefined && visit.helpOpen === true),
     `</div>`,
     `</section>`,
