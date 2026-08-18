@@ -188,6 +188,20 @@ body::after {
   cursor: pointer;
 }
 
+.copy.is-copied,
+.sha.is-copied {
+  color: var(--amber-rim);
+  border-color: var(--amber);
+}
+
+.clock-note {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--magenta);
+}
+
 .doors {
   display: flex;
   flex-wrap: wrap;
@@ -205,9 +219,14 @@ body::after {
   padding: 0.25rem 0.7rem;
 }
 
-.door:hover {
+.door:hover,
+.door.is-current {
   color: var(--amber-rim);
   border-color: #5a4a2a;
+}
+
+.door.is-current {
+  background: #1b1712;
 }
 
 .exhibit {
@@ -456,7 +475,16 @@ html[data-outcome="lost"] .outcome {
 #chrome[data-phase="won"] .cmd-accuse,
 #chrome[data-phase="lost"] .brief,
 #chrome[data-phase="lost"] .help,
-#chrome[data-phase="lost"] .keys {
+#chrome[data-phase="lost"] .keys,
+#chrome[data-phase="lost"] .room,
+#chrome[data-phase="lost"] .peek,
+#chrome[data-phase="lost"] .range,
+#chrome[data-phase="lost"] .meter,
+#chrome[data-phase="lost"] .fairness,
+#chrome[data-phase="lost"] .cmd-good,
+#chrome[data-phase="lost"] .cmd-bad,
+#chrome[data-phase="lost"] .cmd-blame,
+#chrome[data-phase="lost"] .cmd-accuse {
   display: none;
 }
 

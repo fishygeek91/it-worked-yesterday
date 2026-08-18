@@ -1,3 +1,4 @@
+import { GameError } from "./core/errors";
 import { indexOfSha } from "./core/git";
 import {
   dispatch,
@@ -5,12 +6,13 @@ import {
   isTutorialInput,
   markTutorialDone,
   sessionForVisit,
+  type GameSession,
   type SessionCommand,
   type TutorialStore,
 } from "./harness";
 import { buildViewModel, renderGraph } from "./render";
 import "./style.css";
-import { renderChrome, renderWinCard } from "./ui";
+import { renderBadUrl, renderChrome, renderWinCard } from "./ui";
 
 const found = document.querySelector("#app");
 if (!(found instanceof HTMLElement)) {
@@ -25,10 +27,33 @@ const store: TutorialStore = {
   },
 };
 
-let session = sessionForVisit(window.location.search, store);
+/**
+ * Boot result. Invalid shares stay a postmortem; they are not coerced.
+ */
+type Boot =
+  | { kind: "play"; session: GameSession }
+  | { kind: "bad-url"; error: GameError };
 
 /**
- * Map a key to a v1 command. Letters only; no modifiers.
+ * Plant a visit or keep the parser failure for the desk.
+ *
+ * @param search - Location search
+ */
+function bootVisit(search: string): Boot {
+  try {
+    return { kind: "play", session: sessionForVisit(search, store) };
+  } catch (error) {
+    if (error instanceof GameError && error.code === "INVALID_URL") {
+      return { kind: "bad-url", error };
+    }
+    throw error;
+  }
+}
+
+let boot = bootVisit(window.location.search);
+
+/**
+ * Map a key to a session command. Letters only; no modifiers.
  *
  * @param key - event.key
  */
@@ -55,11 +80,14 @@ function commandFromKey(key: string): SessionCommand | null {
 /**
  * Run one command, persist a tutorial win, and repaint.
  *
- * @param command - v1 command name
+ * @param command - Command name
  */
 function applyCommand(command: string): void {
-  session = dispatch(session, command);
-  if (session.outcome === "won" && isTutorialInput(session.input)) {
+  if (boot.kind !== "play") {
+    return;
+  }
+  boot = { kind: "play", session: dispatch(boot.session, command) };
+  if (boot.session.outcome === "won" && isTutorialInput(boot.session.input)) {
     markTutorialDone(store);
   }
   paint();
@@ -69,6 +97,13 @@ function applyCommand(command: string): void {
  * Paint the dungeon first, then the desk. Win card last.
  */
 function paint(): void {
+  if (boot.kind === "bad-url") {
+    document.documentElement.dataset.outcome = "invalid";
+    document.title = "invalid url — it-worked-yesterday";
+    app.innerHTML = renderBadUrl(boot.error, { tutorialDone: isTutorialDone(store) });
+    return;
+  }
+  const session = boot.session;
   const lo = indexOfSha(session.bisect.repo, session.bisect.knownGood);
   const hi = indexOfSha(session.bisect.repo, session.bisect.knownBad);
   const remaining = hi - lo;
@@ -91,6 +126,28 @@ function paint(): void {
   }
 }
 
+/**
+ * Flash a copy control. SHA stays a SHA; the share button says copied.
+ *
+ * @param copy - Element with data-copy
+ */
+function flashCopied(copy: HTMLElement): void {
+  copy.classList.add("is-copied");
+  const prior = copy.textContent;
+  if (copy.classList.contains("copy")) {
+    copy.textContent = "copied";
+  }
+  window.setTimeout(() => {
+    if (!copy.isConnected) {
+      return;
+    }
+    copy.classList.remove("is-copied");
+    if (copy.classList.contains("copy")) {
+      copy.textContent = prior === "copied" ? "copy" : prior;
+    }
+  }, 900);
+}
+
 app.addEventListener("click", (event: Event) => {
   const target = event.target;
   if (!(target instanceof Element)) {
@@ -102,6 +159,7 @@ app.addEventListener("click", (event: Event) => {
     if (text !== null && navigator.clipboard !== undefined) {
       void navigator.clipboard.writeText(text);
     }
+    flashCopied(copy);
     return;
   }
   const button = target.closest("[data-command]");

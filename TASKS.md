@@ -179,3 +179,14 @@ One task per session. Do not start the next until the current task's acceptance 
   - [x] A red room names the mutated path. A green room names no path. The hunk is not shown.
   - [x] `checkout` and unknown commands still throw `INVALID_COMMAND`.
   - [x] Seeded n=32 still emits every `data-sha`. Fogged wings pack tighter than the even hallway.
+
+### TASK 16 — Edge desk
+
+- **Status:** ✅
+- **Deps:** TASK 12, TASK 15
+- **Deliverables:** Invalid URL paints a postmortem (no coerce). Lose names the accused short SHA and hides search chrome. `Over the clock.` when marks exceed optimal. Current case door. Copy flash. Seeded one-liner.
+- **Acceptance:**
+  - [x] `?l=seeded&n=31` still throws `INVALID_URL` in the parser and does not become n=32.
+  - [x] The desk shows the parser line and case doors; it does not render a map.
+  - [x] A loss names the accused short SHA and does not show the win hunk or the first-bad SHA.
+  - [x] Blame that exceeds optimal prints `Over the clock.` without changing the `marks / optimal` element.

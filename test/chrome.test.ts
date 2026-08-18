@@ -75,6 +75,31 @@ describe("renderChrome", () => {
     expect(html.toLowerCase()).not.toMatch(/goblin|lurk|attack|xp|loot/);
   });
 
+  it("marks the open case door and notes an over-the-clock walk", () => {
+    const started = createSession(TUTORIAL);
+    const blamed = dispatch(dispatch(started, "blame"), "blame");
+    expect(blamed.marks).toBeGreaterThan(optimalMarks(8));
+    const html = renderChrome(blamed, { tutorialDone: true });
+    expect(html).toContain("Over the clock.");
+    expect(html).toContain("aria-current=\"page\"");
+    expect(html).toContain("href=\"?l=tutorial\" aria-current=\"page\">Tutorial</a>");
+  });
+
+  it("names the accused short SHA on a loss and does not show the hunk", () => {
+    const started = createSession(TUTORIAL);
+    const ready = markUntilReady(started, (current) => (current.lastResult.ok ? "bad" : "good"));
+    const lost = dispatch(ready, "accuse");
+    expect(lost.outcome).toBe("lost");
+    const accused = lost.bisect.accused;
+    if (accused === null) {
+      throw new Error("losing accuse did not name a SHA");
+    }
+    const html = renderChrome(lost, { tutorialDone: true });
+    expect(html).toContain(`Accused ${accused.slice(0, 7)}. That SHA was not the first-bad.`);
+    expect(html).not.toContain("i &lt; xs.length");
+    expect(html).not.toContain(started.generated.firstBad);
+  });
+
   it("enables accuse only when the range is a single commit", () => {
     const started = createSession(TUTORIAL);
     const ready = markUntilReady(started, (current) => (current.lastResult.ok ? "good" : "bad"));
