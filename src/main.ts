@@ -258,6 +258,18 @@ app.addEventListener("click", (event: Event) => {
     }
     return;
   }
+  // A room click is the v2.1 penalty walk. Clicking the room the lantern
+  // already occupies is not a walk, so it stays free.
+  const room = target.closest("[data-sha]");
+  if (room instanceof Element && room.closest("#map") !== null) {
+    if (boot.kind === "play" && boot.session.outcome === "playing") {
+      const sha = room.getAttribute("data-sha");
+      if (sha !== null && sha !== boot.session.bisect.current) {
+        applyCommand(`checkout ${sha}`);
+      }
+    }
+    return;
+  }
   const copy = target.closest("[data-copy]");
   if (copy instanceof HTMLElement) {
     const text = copy.getAttribute("data-copy");

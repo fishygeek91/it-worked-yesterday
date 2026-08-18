@@ -433,10 +433,14 @@ combat. It amends exactly three locked decisions and no others:
 - It does not change the suspect set, the recorded bounds, or the
   status. `lastResult` becomes the suite verdict at the new room; the
   last blame peek clears.
-- `good` / `bad` still require the current room to be in the suspect
-  set. Outside it they throw `INVALID_MARK` and the desk disables them
-  with the line `This room is outside the remaining range.` Walking back
-  is another `checkout` and costs again.
+- `checkout` is a paid look, not a re-aim: `good` / `bad` still happen
+  only at the checkout the engine chose (the max-min split room). At any
+  other room they throw `INVALID_MARK` and the desk disables them —
+  `This room is outside the remaining range.` off the range, `The
+  interview is at another room.` off the split. Walking back is another
+  `checkout` and costs again. Why marks stay at the engine's room: if a
+  mark could name an arbitrary room, `g`/`b` could not rebuild the
+  search and the `t` save file would lie.
 - An unknown SHA throws `GameError` (`INVALID_SHA`). After the game
   ends, `checkout` is ignored like every non-reset command.
 - Still not a real git checkout: HEAD moves, nothing else does.

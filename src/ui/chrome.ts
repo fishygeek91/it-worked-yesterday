@@ -1,3 +1,4 @@
+import { midpoint } from "../core/bisect";
 import { firstChangedFile } from "../core/diff";
 import { commitAt } from "../core/git";
 import { costOf, optimalMarks } from "../core/score";
@@ -73,6 +74,7 @@ function helpCopy(open: boolean): string {
     `<summary>?</summary>`,
     `<p>g good · b bad · l blame · a accuse · r reset</p>`,
     `<p>Blame costs two marks. It names the path that changed since the last green, not the SHA.</p>`,
+    `<p>Clicking a room walks there. A walk costs one mark and can leave the range. Marks still happen at the checkout the engine chose.</p>`,
     `</details>`,
   ].join("");
 }
@@ -275,6 +277,10 @@ function caseDoors(session: GameSession): string {
 export function renderChrome(session: GameSession, visit?: ChromeVisit): string {
   const searching = session.bisect.status === "searching";
   const canAccuse = session.bisect.status === "readyToAccuse";
+  // A checkout can park the lantern anywhere. Marks only happen at the
+  // checkout the engine chose, so the transcript stays an alphabet.
+  const inRange = session.bisect.suspects.includes(session.bisect.current);
+  const atInterview = !searching || session.bisect.current === midpoint(session.bisect);
   const optimal = optimalMarks(session.bisect.suspectCount);
   const remaining = session.bisect.suspects.length;
   const current = commitAt(session.bisect.repo, session.bisect.current);
@@ -341,6 +347,12 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     `<p class="room" data-tone="${roomTone}">${roomCopy(session)}</p>`,
     peekCopy(session),
     `<p class="range">Remaining suspects: ${String(remaining)}.</p>`,
+    !inRange && session.outcome === "playing"
+      ? `<p class="offrange">This room is outside the remaining range.</p>`
+      : "",
+    inRange && !atInterview && session.outcome === "playing"
+      ? `<p class="offrange">The interview is at another room.</p>`
+      : "",
     canAccuse && session.outcome === "playing"
       ? `<p class="ready">One SHA remains. Accuse it.</p>`
       : "",
@@ -353,8 +365,8 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     exhibit,
     sharekit,
     `<div class="actions">`,
-    commandButton("good", searching),
-    commandButton("bad", searching),
+    commandButton("good", searching && atInterview),
+    commandButton("bad", searching && atInterview),
     commandButton("blame", searching || canAccuse),
     commandButton("accuse", canAccuse),
     commandButton("reset", true),

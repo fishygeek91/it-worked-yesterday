@@ -299,15 +299,15 @@ Human-authorized 2026-08-18 by chat charter. Scope is the v2.1 section of [docs/
 
 ### TASK 26 — Checkout penalty move
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 21, TASK 23
 - **Deliverables:** Live `checkout <sha>` — one operand command in session dispatch at the reserved `costOf("checkout")` cost. It moves the lantern anywhere, including outside the suspect set. Map rooms are clickable to walk there. Desk copy for an out-of-range room. `t` stays `g`/`b`/`l` per the design amendment.
 - **Acceptance:**
-  - [ ] `dispatch(session, "checkout <sha>")` moves the checkout to any commit, inside or outside the suspect set, and increments the clock through `costOf("checkout")` only.
-  - [ ] An unknown SHA throws `GameError` (`INVALID_SHA`). No checkout changes the suspect set, the bounds, the status, or the ledger. `lastResult` becomes the new room's suite verdict.
-  - [ ] `good`/`bad` at a checked-out room inside the suspect set mark that room; outside it they throw `INVALID_MARK` and the desk disables them with `This room is outside the remaining range.`
-  - [ ] `t` stays `g`/`b`/`l`; a session that used checkout still shares an evidence-only transcript; replaying it restores the range and ledger with the penalty marks absent, as the design says.
-  - [ ] e2e: clicking a fogged room checks it out and the clock rises by the checkout cost; the search is still winnable afterward.
+  - [x] `dispatch(session, "checkout <sha>")` moves the checkout to any commit, inside or outside the suspect set, and increments the clock through `costOf("checkout")` only.
+  - [x] An unknown SHA throws `GameError` (`INVALID_SHA`). No checkout changes the suspect set, the bounds, the status, or the ledger. `lastResult` becomes the new room's suite verdict.
+  - [x] `good`/`bad` stay legal only at the checkout the engine chose; anywhere else they throw `INVALID_MARK` and the desk disables them (`This room is outside the remaining range.` off the range, `The interview is at another room.` off the split), so the transcript stays an alphabet.
+  - [x] `t` stays `g`/`b`/`l`; a session that used checkout still shares an evidence-only transcript; replaying it restores the range and ledger with the penalty marks absent, as the design says.
+  - [x] e2e: clicking a fogged room checks it out and the clock rises by the checkout cost; the search is still winnable afterward.
 
 ### TASK 27 — Octopus + merge-base
 
