@@ -361,6 +361,12 @@ body::after {
   background: linear-gradient(90deg, var(--amber), var(--magenta));
 }
 
+.ready {
+  margin: 0;
+  color: var(--amber-rim);
+  font-size: 1.05rem;
+}
+
 .range,
 .fairness,
 .keys {
@@ -463,6 +469,7 @@ html[data-outcome="lost"] .outcome {
 #chrome[data-phase="won"] .brief,
 #chrome[data-phase="won"] .room,
 #chrome[data-phase="won"] .peek,
+#chrome[data-phase="won"] .ready,
 #chrome[data-phase="won"] .range,
 #chrome[data-phase="won"] .meter,
 #chrome[data-phase="won"] .fairness,

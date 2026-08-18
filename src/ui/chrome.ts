@@ -10,6 +10,7 @@ import { shareUrl } from "../harness/url";
  */
 export type ChromeVisit = {
   tutorialDone: boolean;
+  helpOpen?: boolean;
 };
 
 /**
@@ -58,10 +59,13 @@ function peekCopy(session: GameSession): string {
 
 /**
  * Case-file help. Hidden after a win so the exhibit stays the headline.
+ *
+ * @param open - Keep the panel open across paints
  */
-function helpCopy(): string {
+function helpCopy(open: boolean): string {
+  const openAttr = open ? " open" : "";
   return [
-    `<details class="help">`,
+    `<details class="help"${openAttr}>`,
     `<summary>?</summary>`,
     `<p>g good · b bad · l blame · a accuse · r reset</p>`,
     `<p>Blame costs two marks. It names the path that changed since the last green, not the SHA.</p>`,
@@ -254,6 +258,9 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     `<p class="room" data-tone="${roomTone}">${roomCopy(session)}</p>`,
     peekCopy(session),
     `<p class="range">Remaining suspects: ${String(remaining)}.</p>`,
+    canAccuse && session.outcome === "playing"
+      ? `<p class="ready">One SHA remains. Accuse it.</p>`
+      : "",
     `<div class="meter" aria-hidden="true"><span style="width:${String(meterPct)}%"></span></div>`,
     `<p class="fairness">The clock is marks, not wall time. The suite does not mark for you.</p>`,
     outcomeBlock,
@@ -266,7 +273,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     commandButton("reset", true),
     `</div>`,
     `<p class="keys">g good · b bad · l blame · a accuse · r reset</p>`,
-    helpCopy(),
+    helpCopy(visit !== undefined && visit.helpOpen === true),
     `</div>`,
     `</section>`,
   ].join("");
