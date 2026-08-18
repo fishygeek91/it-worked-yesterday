@@ -14,14 +14,19 @@ export {
 } from "./bugs";
 export { firstChangedFile, type DiffLine, type FileDiff } from "./diff";
 export { GameError, type GameErrorCode } from "./errors";
-export { generateBuggyHistory } from "./generate";
+export { diamondLayout, generateBuggyHistory, generateDiamondHistory } from "./generate";
 export {
+  ancestors,
   checkout,
   commitAt,
+  createHistory,
   createLinearHistory,
+  descendants,
+  hashCommit,
   indexOfSha,
   log,
   shaAt,
+  type HistoryCommitSpec,
   type LinearCommitSpec,
 } from "./git";
 export { contentSha, treePayload } from "./hash";
@@ -51,6 +56,9 @@ export type {
   BisectStatus,
   CommandName,
   Commit,
+  DiamondGenerateInput,
+  DiamondLane,
+  DiamondLayout,
   GeneratedHistory,
   GenerateInput,
   MutationId,
