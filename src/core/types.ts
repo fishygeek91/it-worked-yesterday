@@ -9,11 +9,14 @@ export type Sha = string;
 export type Tree = Record<string, string>;
 
 /**
- * One fake commit. Single parent. Linear only in v1.
+ * One fake commit. `parent` is the first parent (null on root) so linear
+ * log and exhibits stay the same. `parents` is empty, one SHA, or two;
+ * octopus stays out.
  */
 export type Commit = {
   sha: Sha;
   parent: Sha | null;
+  parents: Sha[];
   message: string;
   tree: Tree;
 };
@@ -60,6 +63,19 @@ export type BisectState = {
 };
 
 /**
+ * Authored mutation ids. The generator applies exactly one at firstBad.
+ */
+export type MutationId =
+  | "offByOneLoopBound"
+  | "flippedBoolean"
+  | "regexMissingEscape"
+  | "wrongFixtureValue"
+  | "brokenComparison"
+  | "missingReturn"
+  | "invertedSortComparator"
+  | "sliceFencepost";
+
+/**
  * Input for building a linear buggy history.
  */
 export type GenerateInput = {
@@ -80,14 +96,30 @@ export type GeneratedHistory = {
 };
 
 /**
- * Authored mutation ids. The generator applies exactly one at firstBad.
+ * Which lane of the one diamond carries the first-bad.
  */
-export type MutationId =
-  | "offByOneLoopBound"
-  | "flippedBoolean"
-  | "regexMissingEscape"
-  | "wrongFixtureValue"
-  | "brokenComparison"
-  | "missingReturn"
-  | "invertedSortComparator"
-  | "sliceFencepost";
+export type DiamondLane = "trunk" | "branch";
+
+/**
+ * Input for the one-fork one-join diamond. Linear histories still use
+ * `GenerateInput`; this does not change that pin.
+ */
+export type DiamondGenerateInput = {
+  suspectCount: number;
+  seed: number;
+  mutation: MutationId;
+  firstBadLane: DiamondLane;
+  firstBadOnLane: number;
+};
+
+/**
+ * Measured diamond: two lanes, one merge, one tail commit (HEAD).
+ */
+export type DiamondLayout = {
+  trunkLength: number;
+  branchLength: number;
+  trunkIndices: number[];
+  branchIndices: number[];
+  mergeIndex: number;
+  tailIndex: number;
+};

@@ -252,14 +252,14 @@ Human-authorized 2026-08-18. Scope is the v2.0 section of [docs/design.md](docs/
 
 ### TASK 22 — Merge commits in core
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 1
 - **Deliverables:** Two-parent commits in `src/core` (root has none, merge has two, octopus rejected). DAG ancestry helpers walking `repo.order`. Diamond generator: one fork after the known-good, one join before HEAD, first-bad on either lane, failure persisting in DAG descendants.
 - **Acceptance:**
-  - [ ] SHAs hash both parents in order; same inputs, same SHA.
-  - [ ] Exactly one first-bad. The red set equals `firstBad` plus its DAG descendants; the other lane stays green; the join is red.
-  - [ ] Linear histories keep byte-identical SHAs and behavior.
-  - [ ] Zero DOM. Runs under Vitest in Node.
+  - [x] SHAs hash both parents in order; same inputs, same SHA.
+  - [x] Exactly one first-bad. The red set equals `firstBad` plus its DAG descendants; the other lane stays green; the join is red.
+  - [x] Linear histories keep byte-identical SHAs and behavior.
+  - [x] Zero DOM. Runs under Vitest in Node.
 
 ### TASK 23 — DAG bisect
 
