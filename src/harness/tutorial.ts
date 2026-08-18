@@ -1,6 +1,6 @@
 import type { GenerateInput } from "../core";
 import type { GameSession } from "./session";
-import { sessionFromUrl, TUTORIAL_INPUT } from "./url";
+import { sessionFromUrl, TUTORIAL_INPUT, YESTERDAY_INPUT } from "./url";
 
 /**
  * Client persistence for tutorial completion. Not part of the seed.
@@ -48,7 +48,33 @@ export function isTutorialInput(input: GenerateInput): boolean {
 }
 
 /**
+ * True when this session is the pinned yesterday dungeon.
+ *
+ * @param input - Generate input
+ */
+export function isYesterdayInput(input: GenerateInput): boolean {
+  return (
+    input.suspectCount === YESTERDAY_INPUT.suspectCount &&
+    input.firstBadIndex === YESTERDAY_INPUT.firstBadIndex &&
+    input.seed === YESTERDAY_INPUT.seed &&
+    input.mutation === YESTERDAY_INPUT.mutation
+  );
+}
+
+/**
+ * True when the query has no params. Parse still maps this to tutorial;
+ * the visit router maps it to yesterday after the tutorial is done.
+ *
+ * @param search - Location search
+ */
+function isEmptySearch(search: string): boolean {
+  const raw = search.startsWith("?") ? search.slice(1) : search;
+  return raw.length === 0;
+}
+
+/**
  * Plant a session for this visit. Unseen players cannot skip the tutorial.
+ * After that, an empty query is yesterday (the last free-play).
  *
  * @param search - Location search
  * @param store - Persistence
@@ -56,6 +82,9 @@ export function isTutorialInput(input: GenerateInput): boolean {
 export function sessionForVisit(search: string, store: TutorialStore): GameSession {
   if (!isTutorialDone(store)) {
     return sessionFromUrl("?l=tutorial");
+  }
+  if (isEmptySearch(search)) {
+    return sessionFromUrl("?l=yesterday");
   }
   return sessionFromUrl(search);
 }

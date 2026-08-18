@@ -131,12 +131,12 @@ One task per session. Do not start the next until the current task's acceptance 
 
 ### TASK 11 — Yesterday
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 10
 - **Deliverables:** Linear `n=16`, first-bad suspect index `14`, mutation `flippedBoolean`.
 - **Acceptance:**
-  - [ ] Pinned first-bad is in the last quarter.
-  - [ ] Same clock accounting as tutorial.
+  - [x] Pinned first-bad is in the last quarter.
+  - [x] Same clock accounting as tutorial.
 
 ### TASK 12 — Seeded share mode
 
