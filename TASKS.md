@@ -222,3 +222,15 @@ One task per session. Do not start the next until the current task's acceptance 
   - [x] A lost walk always shows at least one flagged lie; entries stay in mark order.
   - [x] The record renders only on `lost` — never while playing, never on a win.
   - [x] Determinism holds: the ledger derives from commands only, no wall clock.
+
+### TASK 20 — Share kit
+
+- **Status:** ✅
+- **Deps:** TASK 9, TASK 16
+- **Deliverables:** Win-only share kit in `src/ui/shareKit.ts`: a spoiler-free copyable result line (case, `marks / optimal`, seed, share link — never the guilty SHA) and a standalone 1200×630 win-card SVG that `src/main.ts` rasterizes to a PNG download. No new commands, no cost changes, no runtime dependencies. Human-authorized on 2026-08-18.
+- **Acceptance:**
+  - [x] `shareText` throws unless the session is won and never contains the accused SHA.
+  - [x] `renderWinCardSvg` is a self-contained 1200×630 SVG with the guilty SHA lit, `marks / optimal`, and the seed; it keeps every `data-sha`.
+  - [x] The copy-result and save-card controls render only on a win and do not touch the clock; costs still come only from `score.ts`.
+  - [x] `src/ui/shareKit.ts` does not import `src/core/bugs.ts` or `src/core/suite.ts`. PNG export uses no runtime dependency.
+  - [x] e2e: after a tutorial win, saving the card downloads a `.png` file.

@@ -45,6 +45,12 @@ test("wins the tutorial by marking what the room said", async ({ page }) => {
   await expect(page.locator(".win-seed")).toHaveText("seed 1729");
   await expect(page.locator(".win-marks")).toHaveText("3 / 3");
 
+  await expect(page.locator("[data-share-result]")).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("[data-save-card]").click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("iwy-tutorial-seed-1729-3-of-3.png");
+
   const tutorialDone = await page.evaluate(() => window.localStorage.getItem("iwy.tutorialDone"));
   expect(tutorialDone).toBe("1");
 });

@@ -29,10 +29,11 @@ function escapeHtml(value: string): string {
 
 /**
  * Case file name. Not a new level — the three v1 pins only.
+ * Exported so the share kit names the same case the desk does.
  *
  * @param session - Current session
  */
-function caseName(session: GameSession): string {
+export function caseName(session: GameSession): string {
   if (isTutorialInput(session.input)) {
     return "Tutorial";
   }
@@ -293,6 +294,16 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
       : "";
   const doors = visit !== undefined && visit.tutorialDone ? caseDoors(session) : "";
   const exhibit = winExhibit(session);
+  // Share kit is win-only. Neither control is a command: no dispatch, no cost.
+  const sharekit =
+    session.outcome === "won"
+      ? [
+          `<div class="sharekit">`,
+          `<button type="button" class="copy" data-share-result>copy result</button>`,
+          `<button type="button" class="copy" data-save-card>save card</button>`,
+          `</div>`,
+        ].join("")
+      : "";
   const roomTone = session.lastResult.ok ? "lamp" : "rot";
   const phase = session.outcome === "playing" ? (canAccuse ? "ready" : "searching") : session.outcome;
   const meterPct = Math.round((remaining / session.bisect.suspectCount) * 100);
@@ -324,6 +335,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
     outcomeBlock,
     ledgerCopy(session),
     exhibit,
+    sharekit,
     `<div class="actions">`,
     commandButton("good", searching),
     commandButton("bad", searching),
