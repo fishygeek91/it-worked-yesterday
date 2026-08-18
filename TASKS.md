@@ -346,14 +346,14 @@ Human-authorized 2026-08-18 by chat charter. Scope is the v2.1 section of [docs/
 
 ### TASK 30 — GIF export
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 20, TASK 21
 - **Deliverables:** Win-only `save gif` control. Frames replayed deterministically from the session input + transcript through `dispatch`, rendered from view-models via `renderGraph`, quantized, and encoded by our own GIF89a + LZW writer in `src/ui/gif.ts`. No runtime dependency.
 - **Acceptance:**
-  - [ ] The control renders only on a win; the download is a `.gif` (e2e like the PNG card).
-  - [ ] Frames derive from replaying the input + transcript and rendering view-models — not a screen grab; same win, same frame sequence.
-  - [ ] The encoder is ours, unit-tested in Node on synthetic frames (valid GIF89a header, logical screen, trailer; LZW round-trips a known frame). No runtime dependency.
-  - [ ] Neither the download name nor the copyable result line contains the guilty SHA; the clock does not move; `src/core` and `src/harness` are untouched.
+  - [x] The control renders only on a win; the download is a `.gif` (e2e like the PNG card).
+  - [x] Frames derive from replaying the input + transcript and rendering view-models — not a screen grab; same win, same frame sequence.
+  - [x] The encoder is ours, unit-tested in Node on synthetic frames (valid GIF89a header, logical screen, trailer; LZW round-trips a known frame). No runtime dependency.
+  - [x] Neither the download name nor the copyable result line contains the guilty SHA; the clock does not move; `src/core` and `src/harness` are untouched.
 
 ### TASK 31 — Import a case
 

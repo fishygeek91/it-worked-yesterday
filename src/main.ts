@@ -13,9 +13,14 @@ import { buildViewModel, renderGraph } from "./render";
 import "./style.css";
 import {
   cueForCommand,
+  encodeGif,
+  FINAL_DELAY_CS,
+  FRAME_DELAY_CS,
+  gifFileName,
   learnWalkNext,
   learnWalkStart,
   playCue,
+  quantizeFrame,
   renderBadUrl,
   renderChrome,
   renderLearn,
@@ -23,7 +28,10 @@ import {
   renderWinCardSvg,
   shareQuery,
   shareText,
+  svgPixelSize,
   winCardFileName,
+  winFrameSvgs,
+  type QuantizedFrame,
 } from "./ui";
 
 const found = document.querySelector("#app");
@@ -253,6 +261,76 @@ function saveCardPng(session: GameSession): void {
   image.src = svgUrl;
 }
 
+/**
+ * Rasterize one frame SVG at its native pixel size. The SVG has no
+ * external references, so the canvas stays untainted and readable.
+ *
+ * @param svg - One dungeon-map SVG document
+ * @param width - Raster width in pixels
+ * @param height - Raster height in pixels
+ */
+function rasterizeSvg(svg: string, width: number, height: number): Promise<Uint8ClampedArray> {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      URL.revokeObjectURL(url);
+      if (context === null) {
+        reject(new Error("no 2d canvas"));
+        return;
+      }
+      context.drawImage(image, 0, 0, width, height);
+      resolve(context.getImageData(0, 0, width, height).data);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("frame svg failed to load"));
+    };
+    image.src = url;
+  });
+}
+
+/**
+ * Build and download the win GIF: replay the transcript into frame SVGs,
+ * rasterize each, quantize to ≤256 colors, and encode with our GIF89a
+ * writer. Never touches the session — the clock does not move.
+ *
+ * @param session - Finished winning session
+ */
+async function saveWinGif(session: GameSession): Promise<void> {
+  const svgs = winFrameSvgs(session);
+  const first = svgs[0];
+  if (first === undefined) {
+    return;
+  }
+  const { width, height } = svgPixelSize(first);
+  const frames: QuantizedFrame[] = [];
+  for (let at = 0; at < svgs.length; at += 1) {
+    const svg = svgs[at];
+    if (svg === undefined) {
+      continue;
+    }
+    const rgba = await rasterizeSvg(svg, width, height);
+    const delay = at === svgs.length - 1 ? FINAL_DELAY_CS : FRAME_DELAY_CS;
+    frames.push(quantizeFrame(rgba, width, height, delay));
+  }
+  const gif = new Blob([encodeGif(frames, width, height).slice().buffer], { type: "image/gif" });
+  const gifUrl = URL.createObjectURL(gif);
+  const anchor = document.createElement("a");
+  anchor.href = gifUrl;
+  anchor.download = gifFileName(session);
+  anchor.click();
+  // Revoke after the click has been consumed by the download.
+  window.setTimeout(() => {
+    URL.revokeObjectURL(gifUrl);
+  }, 1000);
+}
+
 app.addEventListener("click", (event: Event) => {
   const target = event.target;
   if (!(target instanceof Element)) {
@@ -273,6 +351,13 @@ app.addEventListener("click", (event: Event) => {
   if (saveCard instanceof HTMLElement) {
     if (boot.kind === "play" && boot.session.outcome === "won") {
       saveCardPng(boot.session);
+    }
+    return;
+  }
+  const saveGif = target.closest("[data-save-gif]");
+  if (saveGif instanceof HTMLElement) {
+    if (boot.kind === "play" && boot.session.outcome === "won") {
+      void saveWinGif(boot.session);
     }
     return;
   }
