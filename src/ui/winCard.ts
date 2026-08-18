@@ -31,6 +31,7 @@ export function renderWinCard(session: GameSession): string {
   const graph = renderGraph(buildViewModel(session));
   return [
     `<article id="win-card" style="width:1200px;height:630px">`,
+    `<p class="win-kicker">Accused</p>`,
     graph,
     `<p class="win-sha">${escapeHtml(accused)}</p>`,
     `<p class="win-marks">${String(session.marks)} / ${String(optimal)}</p>`,

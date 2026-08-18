@@ -12,10 +12,10 @@ export const GRAPH_PAINT = {
   background: "#12110f",
 } as const;
 
-const PAD_X = 36;
-const STEP = 56;
-const ROOM_Y = 44;
-const HEIGHT = 96;
+const PAD_X = 48;
+const STEP = 72;
+const ROOM_Y = 78;
+const HEIGHT = 168;
 
 type Point = {
   x: number;
@@ -72,24 +72,26 @@ function roomGeometry(node: ViewNode, at: Point, fill: string, rim: string): str
   const { x, y } = at;
   if (node.shape === "lamp") {
     return [
-      `<circle cx="${String(x)}" cy="${String(y)}" r="10" fill="${fill}" />`,
-      `<line x1="${String(x)}" y1="${String(y - 10)}" x2="${String(x)}" y2="${String(y - 16)}" stroke="${fill}" stroke-width="2" />`,
+      `<circle cx="${String(x)}" cy="${String(y)}" r="13" fill="${fill}" />`,
+      `<circle cx="${String(x)}" cy="${String(y)}" r="6" fill="${GRAPH_PAINT.background}" fill-opacity="0.35" />`,
+      `<line x1="${String(x)}" y1="${String(y - 13)}" x2="${String(x)}" y2="${String(y - 22)}" stroke="${fill}" stroke-width="2.5" stroke-linecap="round" />`,
     ].join("");
   }
   if (node.shape === "rot") {
-    const left = x - 9;
-    const top = y - 9;
-    const right = x + 9;
-    const bottom = y + 9;
-    return `<path d="M ${String(left)} ${String(top)} H ${String(right)} V ${String(y + 2)} M ${String(right)} ${String(bottom)} H ${String(left)} V ${String(y - 2)}" fill="none" stroke="${fill}" stroke-width="2" />`;
+    const s = 11;
+    return [
+      `<rect x="${String(x - s)}" y="${String(y - s)}" width="${String(s * 2)}" height="${String(s * 2)}" fill="none" stroke="${fill}" stroke-width="2.5" />`,
+      `<line x1="${String(x - s + 3)}" y1="${String(y - s + 3)}" x2="${String(x + s - 3)}" y2="${String(y + s - 3)}" stroke="${fill}" stroke-width="2" />`,
+    ].join("");
   }
   if (node.shape === "fog") {
-    const points = `${String(x)},${String(y - 11)} ${String(x + 11)},${String(y)} ${String(x)},${String(y + 11)} ${String(x - 11)},${String(y)}`;
-    return `<polygon points="${points}" fill="${fill}" fill-opacity="0.2" stroke="${fill}" stroke-dasharray="3 2" />`;
+    const points = `${String(x)},${String(y - 14)} ${String(x + 14)},${String(y)} ${String(x)},${String(y + 14)} ${String(x - 14)},${String(y)}`;
+    return `<polygon points="${points}" fill="${fill}" fill-opacity="0.18" stroke="${fill}" stroke-dasharray="4 3" stroke-width="1.75" />`;
   }
   return [
-    `<circle cx="${String(x)}" cy="${String(y)}" r="10" fill="none" stroke="${rim}" stroke-width="2" />`,
-    `<path d="M ${String(x - 5)} ${String(y - 10)} Q ${String(x)} ${String(y - 18)} ${String(x + 5)} ${String(y - 10)}" fill="none" stroke="${rim}" stroke-width="2" />`,
+    `<circle cx="${String(x)}" cy="${String(y)}" r="16" fill="none" stroke="${rim}" stroke-width="2.5" class="lantern-rim" />`,
+    `<circle cx="${String(x)}" cy="${String(y)}" r="8" fill="${rim}" fill-opacity="0.35" />`,
+    `<path d="M ${String(x - 7)} ${String(y - 16)} Q ${String(x)} ${String(y - 28)} ${String(x + 7)} ${String(y - 16)}" fill="none" stroke="${rim}" stroke-width="2.5" stroke-linecap="round" />`,
   ].join("");
 }
 
@@ -100,7 +102,7 @@ function roomGeometry(node: ViewNode, at: Point, fill: string, rim: string): str
  * @param to - Child
  */
 function corridor(from: Point, to: Point): string {
-  return `<line x1="${String(from.x)}" y1="${String(from.y)}" x2="${String(to.x)}" y2="${String(to.y)}" stroke="${GRAPH_PAINT.slate}" stroke-opacity="0.35" />`;
+  return `<line x1="${String(from.x)}" y1="${String(from.y)}" x2="${String(to.x)}" y2="${String(to.y)}" stroke="${GRAPH_PAINT.slate}" stroke-opacity="0.4" stroke-width="3" stroke-linecap="round" />`;
 }
 
 /**
@@ -129,9 +131,9 @@ function rangeWash(points: Point[], lit: boolean[], wash: string): string {
   if (start === undefined || end === undefined) {
     return "";
   }
-  const x = start.x - 18;
-  const w = end.x - start.x + 36;
-  return `<rect x="${String(x)}" y="${String(ROOM_Y - 22)}" width="${String(w)}" height="44" rx="16" fill="${wash}" />`;
+  const x = start.x - 26;
+  const w = end.x - start.x + 52;
+  return `<rect x="${String(x)}" y="${String(ROOM_Y - 36)}" width="${String(w)}" height="72" rx="24" fill="${wash}" />`;
 }
 
 /**
@@ -180,12 +182,16 @@ export function renderGraph(vm: ViewModel): string {
       }
       const fill =
         node.shape === "lamp" ? good : node.shape === "rot" ? bad : node.shape === "fog" ? unknown : rim;
-      const opacity = node.lit ? "1" : "0.35";
+      const opacity = node.lit ? "1" : "0.32";
+      const short = node.sha.slice(0, 7);
       return [
         `<g data-shape="${escapeXml(node.shape)}" data-label="${escapeXml(node.label)}" data-lit="${node.lit ? "true" : "false"}" data-sha="${escapeXml(node.sha)}" opacity="${opacity}">`,
         `<title>${escapeXml(node.sha)}</title>`,
         roomGeometry(node, at, fill, rim),
-        `<text x="${String(at.x)}" y="${String(at.y + 26)}" text-anchor="middle" fill="#e8e2d6" font-size="9">${escapeXml(node.label)}</text>`,
+        `<text x="${String(at.x)}" y="${String(at.y + 34)}" text-anchor="middle" fill="#e8e2d6" font-size="11" font-family="IBM Plex Mono, ui-monospace, monospace">${escapeXml(node.label)}</text>`,
+        node.shape === "lantern"
+          ? `<text x="${String(at.x)}" y="${String(at.y + 50)}" text-anchor="middle" fill="#b7b1a4" font-size="9" font-family="IBM Plex Mono, ui-monospace, monospace">${escapeXml(short)}</text>`
+          : "",
         "</g>",
       ].join("");
     })
