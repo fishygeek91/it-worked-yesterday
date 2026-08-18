@@ -23,5 +23,17 @@ export {
   type CueSpec,
   type SoundCue,
 } from "./sound";
+export {
+  encodeGif,
+  FINAL_DELAY_CS,
+  FRAME_DELAY_CS,
+  gifFileName,
+  lzwEncode,
+  quantizeFrame,
+  replayWinStates,
+  svgPixelSize,
+  winFrameSvgs,
+  type QuantizedFrame,
+} from "./gif";
 export { renderWinCard } from "./winCard";
 export { renderWinCardSvg, shareQuery, shareText, winCardFileName } from "./shareKit";

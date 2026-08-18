@@ -395,6 +395,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
           `<div class="sharekit">`,
           `<button type="button" class="copy" data-share-result>copy result</button>`,
           `<button type="button" class="copy" data-save-card>save card</button>`,
+          `<button type="button" class="copy" data-save-gif>save gif</button>`,
           `</div>`,
         ].join("")
       : "";
