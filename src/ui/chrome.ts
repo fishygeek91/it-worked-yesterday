@@ -1,5 +1,6 @@
 import { indexOfSha } from "../core/git";
 import { costOf, optimalMarks } from "../core/score";
+import { isTutorialInput } from "../harness/tutorial";
 import type { GameSession, SessionCommand } from "../harness/session";
 
 /**
@@ -69,8 +70,16 @@ export function renderChrome(session: GameSession): string {
   const remaining = hi - lo;
   const outcome = outcomeCopy(session);
   const outcomeBlock = outcome === "" ? "" : `<p class="outcome">${outcome}</p>`;
+  const teach = isTutorialInput(session.input)
+    ? [
+        `<p class="teach">HEAD is red. The last green is 8 suspects back.</p>`,
+        `<p class="teach">Mark the checkout. The range narrows.</p>`,
+        `<p class="teach">When one SHA remains, accuse it.</p>`,
+      ].join("")
+    : "";
   return [
     `<section id="chrome">`,
+    teach,
     `<p class="marks">${String(session.marks)} / ${String(optimal)}</p>`,
     `<p class="seed">seed ${escapeHtml(String(session.input.seed))}</p>`,
     `<p class="room">${roomCopy(session)}</p>`,

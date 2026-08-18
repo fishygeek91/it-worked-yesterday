@@ -41,6 +41,10 @@ p {
   max-width: 40rem;
 }
 
+.teach {
+  margin: 0 0 0.4rem;
+}
+
 .marks {
   font-variant-numeric: tabular-nums;
   font-size: 1.25rem;
