@@ -1,6 +1,6 @@
-import type { GenerateInput } from "../core";
-import type { GameSession } from "./session";
-import { parseUrl, sessionFromUrl, TUTORIAL_INPUT, YESTERDAY_INPUT } from "./url";
+import type { GameSession, SessionInput } from "./session";
+import { isDiamondInput } from "./session";
+import { MERGED_INPUT, parseUrl, sessionFromUrl, TUTORIAL_INPUT, YESTERDAY_INPUT } from "./url";
 
 /**
  * Client persistence for tutorial completion. Not part of the seed.
@@ -38,7 +38,10 @@ export function markTutorialDone(store: TutorialStore): void {
  *
  * @param input - Generate input
  */
-export function isTutorialInput(input: GenerateInput): boolean {
+export function isTutorialInput(input: SessionInput): boolean {
+  if (isDiamondInput(input)) {
+    return false;
+  }
   return (
     input.suspectCount === TUTORIAL_INPUT.suspectCount &&
     input.firstBadIndex === TUTORIAL_INPUT.firstBadIndex &&
@@ -52,12 +55,31 @@ export function isTutorialInput(input: GenerateInput): boolean {
  *
  * @param input - Generate input
  */
-export function isYesterdayInput(input: GenerateInput): boolean {
+export function isYesterdayInput(input: SessionInput): boolean {
+  if (isDiamondInput(input)) {
+    return false;
+  }
   return (
     input.suspectCount === YESTERDAY_INPUT.suspectCount &&
     input.firstBadIndex === YESTERDAY_INPUT.firstBadIndex &&
     input.seed === YESTERDAY_INPUT.seed &&
     input.mutation === YESTERDAY_INPUT.mutation
+  );
+}
+
+/**
+ * True when this session is the pinned feature-branch diamond.
+ *
+ * @param input - Session pin
+ */
+export function isMergedInput(input: SessionInput): boolean {
+  return (
+    isDiamondInput(input) &&
+    input.suspectCount === MERGED_INPUT.suspectCount &&
+    input.seed === MERGED_INPUT.seed &&
+    input.mutation === MERGED_INPUT.mutation &&
+    input.firstBadLane === MERGED_INPUT.firstBadLane &&
+    input.firstBadOnLane === MERGED_INPUT.firstBadOnLane
   );
 }
 

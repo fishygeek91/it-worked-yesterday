@@ -43,9 +43,12 @@ describe("sessionForVisit", () => {
     expect(isTutorialDone(store)).toBe(false);
     const session = sessionForVisit(SEEDED, store);
     expect(session.input).toEqual(TUTORIAL_INPUT);
-    expect(session.input.firstBadIndex).toBe(3);
+    if ("firstBadIndex" in session.input) {
+      expect(session.input.firstBadIndex).toBe(3);
+    }
     expect(session.input.mutation).toBe("offByOneLoopBound");
     expect(indexOfSha(session.generated.repo, session.generated.firstBad)).toBe(4);
+    expect(sessionForVisit("?l=merged", store).input).toEqual(TUTORIAL_INPUT);
   });
 
   it("honors a seeded URL after the tutorial is done", () => {

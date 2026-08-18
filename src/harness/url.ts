@@ -1,11 +1,18 @@
 import { GameError, isUint32, mulberry32 } from "../core";
-import type { GenerateInput, MutationId } from "../core";
-import { createSession, dispatch, type GameSession, type SessionCommand } from "./session";
+import type { DiamondGenerateInput, GenerateInput, MutationId } from "../core";
+import {
+  createSession,
+  dispatch,
+  isDiamondInput,
+  type GameSession,
+  type SessionCommand,
+  type SessionInput,
+} from "./session";
 
 /**
  * Level id in `l`. Case-sensitive. `learn` is a case file, not a dungeon.
  */
-export type LevelId = "tutorial" | "yesterday" | "seeded" | "learn";
+export type LevelId = "tutorial" | "yesterday" | "seeded" | "learn" | "merged";
 
 /**
  * Letters in the `t` param. Accuse is not in the alphabet: a finished
@@ -25,6 +32,7 @@ export type UrlClock = { marks: number } | { transcript: string };
 export type UrlState =
   | ({ level: "tutorial" } & UrlClock)
   | ({ level: "yesterday" } & UrlClock)
+  | ({ level: "merged" } & UrlClock)
   | ({ level: "seeded"; n: 32 | 64; seed: number } & UrlClock)
   | { level: "learn" };
 
@@ -72,6 +80,17 @@ export const YESTERDAY_INPUT: GenerateInput = {
 };
 
 /**
+ * Pinned merged dungeon. n=32, first-bad on the branch, missingReturn.
+ */
+export const MERGED_INPUT: DiamondGenerateInput = {
+  suspectCount: 32,
+  seed: 1729,
+  mutation: "missingReturn",
+  firstBadLane: "branch",
+  firstBadOnLane: 7,
+};
+
+/**
  * Throw `INVALID_URL`. URL edges use this code, not `INVALID_SEED`.
  *
  * @param message - Postmortem line
@@ -87,7 +106,11 @@ function invalidUrl(message: string): never {
  */
 function isLevelId(value: string): value is LevelId {
   return (
-    value === "tutorial" || value === "yesterday" || value === "seeded" || value === "learn"
+    value === "tutorial" ||
+    value === "yesterday" ||
+    value === "seeded" ||
+    value === "learn" ||
+    value === "merged"
   );
 }
 
@@ -197,12 +220,12 @@ export function seededInput(n: 32 | 64, seed: number): GenerateInput {
 }
 
 /**
- * True when two generate inputs are the same dungeon pin.
+ * True when two linear generate inputs are the same dungeon pin.
  *
  * @param left - First input
  * @param right - Second input
  */
-function sameInput(left: GenerateInput, right: GenerateInput): boolean {
+function sameLinearInput(left: GenerateInput, right: GenerateInput): boolean {
   return (
     left.suspectCount === right.suspectCount &&
     left.firstBadIndex === right.firstBadIndex &&
@@ -212,12 +235,28 @@ function sameInput(left: GenerateInput, right: GenerateInput): boolean {
 }
 
 /**
+ * True when two diamond pins are the same dungeon.
+ *
+ * @param left - First pin
+ * @param right - Second pin
+ */
+function sameDiamondInput(left: DiamondGenerateInput, right: DiamondGenerateInput): boolean {
+  return (
+    left.suspectCount === right.suspectCount &&
+    left.seed === right.seed &&
+    left.mutation === right.mutation &&
+    left.firstBadLane === right.firstBadLane &&
+    left.firstBadOnLane === right.firstBadOnLane
+  );
+}
+
+/**
  * Map parsed URL state to a generate input. `learn` refuses: it has no
  * history to plant, and coercing it into one would invent a fourth dungeon.
  *
  * @param state - Parsed query
  */
-function inputFromUrl(state: UrlState): GenerateInput {
+function inputFromUrl(state: UrlState): SessionInput {
   if (state.level === "learn") {
     invalidUrl("learn is not a dungeon");
   }
@@ -226,6 +265,9 @@ function inputFromUrl(state: UrlState): GenerateInput {
   }
   if (state.level === "yesterday") {
     return YESTERDAY_INPUT;
+  }
+  if (state.level === "merged") {
+    return MERGED_INPUT;
   }
   return seededInput(state.n, state.seed);
 }
@@ -274,6 +316,9 @@ export function parseUrl(search: string): UrlState {
   }
   if (levelRaw === "yesterday") {
     return { level: "yesterday", ...clock };
+  }
+  if (levelRaw === "merged") {
+    return { level: "merged", ...clock };
   }
   return { level: "tutorial", ...clock };
 }
@@ -357,11 +402,14 @@ export function shareUrl(session: GameSession): string {
     session.outcome === "playing" && session.transcript.length > 0
       ? { transcript: session.transcript }
       : { marks: session.marks };
-  if (sameInput(session.input, TUTORIAL_INPUT)) {
+  if (!isDiamondInput(session.input) && sameLinearInput(session.input, TUTORIAL_INPUT)) {
     return serializeUrl({ level: "tutorial", ...clock });
   }
-  if (sameInput(session.input, YESTERDAY_INPUT)) {
+  if (!isDiamondInput(session.input) && sameLinearInput(session.input, YESTERDAY_INPUT)) {
     return serializeUrl({ level: "yesterday", ...clock });
+  }
+  if (isDiamondInput(session.input) && sameDiamondInput(session.input, MERGED_INPUT)) {
+    return serializeUrl({ level: "merged", ...clock });
   }
   const n = session.input.suspectCount;
   if (n !== 32 && n !== 64) {
