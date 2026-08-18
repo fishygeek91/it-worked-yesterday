@@ -1,4 +1,4 @@
-export { accuse, mark, midpoint, midpointIndex, start } from "./bisect";
+export { accuse, mark, midpoint, midpointIndex, splitSuspect, start, suspectSet } from "./bisect";
 export {
   applyMutation,
   brokenComparison,

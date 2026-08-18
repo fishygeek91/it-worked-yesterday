@@ -263,14 +263,14 @@ Human-authorized 2026-08-18. Scope is the v2.0 section of [docs/design.md](docs/
 
 ### TASK 23 — DAG bisect
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 22
 - **Deliverables:** Suspect set `S` (ancestors of known-bad minus ancestors of every known-good), max-min split midpoint with `repo.order` tie-break, `good`/`bad` set updates, accuse at `|S| = 1`. Extend the fuzz bar with 200 seeded diamonds.
 - **Acceptance:**
-  - [ ] Midpoint maximizes `min(w, |S| - w)` and reduces to `floor((lo + hi) / 2)` on linear histories, byte-identical.
-  - [ ] An honest walk (mark what the suite said) always accuses the planted first-bad on all 200 diamond seeds.
-  - [ ] Marking against the suite still loses honestly; the engine does not auto-mark.
-  - [ ] Do not weaken the existing linear fuzz. Extend it.
+  - [x] Midpoint maximizes `min(w, |S| - w)` and reduces to `floor((lo + hi) / 2)` on linear histories, byte-identical.
+  - [x] An honest walk (mark what the suite said) always accuses the planted first-bad on all 200 diamond seeds.
+  - [x] Marking against the suite still loses honestly; the engine does not auto-mark.
+  - [x] Do not weaken the existing linear fuzz. Extend it.
 
 ### TASK 24 — Diamond renderer
 

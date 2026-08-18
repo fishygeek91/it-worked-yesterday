@@ -1,5 +1,5 @@
 import { firstChangedFile } from "../core/diff";
-import { commitAt, indexOfSha } from "../core/git";
+import { commitAt } from "../core/git";
 import { costOf, optimalMarks } from "../core/score";
 import type { GameSession, SessionCommand } from "../harness/session";
 import { isTutorialInput, isYesterdayInput } from "../harness/tutorial";
@@ -269,9 +269,7 @@ export function renderChrome(session: GameSession, visit?: ChromeVisit): string 
   const searching = session.bisect.status === "searching";
   const canAccuse = session.bisect.status === "readyToAccuse";
   const optimal = optimalMarks(session.bisect.suspectCount);
-  const lo = indexOfSha(session.bisect.repo, session.bisect.knownGood);
-  const hi = indexOfSha(session.bisect.repo, session.bisect.knownBad);
-  const remaining = hi - lo;
+  const remaining = session.bisect.suspects.length;
   const current = commitAt(session.bisect.repo, session.bisect.current);
   const shortSha = current.sha.slice(0, 7);
   const outcome = outcomeCopy(session);

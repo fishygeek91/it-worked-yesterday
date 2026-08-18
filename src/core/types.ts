@@ -50,6 +50,8 @@ export type BisectStatus = "searching" | "readyToAccuse" | "accused";
 
 /**
  * Bisect search state. Core emits this; the harness owns the session clock.
+ * `suspects` is S in `repo.order`: ancestors of known-bad minus ancestors
+ * of every known-good. Linear walks keep the v1 lo/hi bounds alongside it.
  */
 export type BisectState = {
   repo: Repo;
@@ -58,6 +60,7 @@ export type BisectState = {
   current: Sha;
   marks: number;
   suspectCount: number;
+  suspects: Sha[];
   status: BisectStatus;
   accused: Sha | null;
 };

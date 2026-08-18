@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { GameError, generateBuggyHistory, mulberry32, type MutationId, type Rng } from "../src/core";
+import {
+  GameError,
+  diamondLayout,
+  generateBuggyHistory,
+  generateDiamondHistory,
+  mulberry32,
+  type DiamondLane,
+  type MutationId,
+  type Rng,
+} from "../src/core";
 import { assertPersistence, countFirstBads, optimalAccuse } from "./helpers";
 
 const MUTATION_IDS: readonly MutationId[] = [
@@ -63,6 +72,27 @@ describe("seeded fuzz (200)", () => {
       expect(countFirstBads(generated.repo), `seed ${String(seed)} first-bad count`).toBe(1);
       assertPersistence(generated.repo, generated.firstBad);
       expect(optimalAccuse(generated), `seed ${String(seed)} accuse`).toBe(generated.firstBad);
+    }
+  });
+});
+
+describe("seeded diamond fuzz (200)", () => {
+  it("honest walks accuse the planted first-bad on 200 diamond seeds", () => {
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const rng = mulberry32(seed);
+      const suspectCount = 8 + rng.nextInt(25);
+      const layout = diamondLayout(suspectCount);
+      const firstBadLane: DiamondLane = rng.nextInt(2) === 0 ? "trunk" : "branch";
+      const laneLength = firstBadLane === "trunk" ? layout.trunkLength : layout.branchLength;
+      const firstBadOnLane = rng.nextInt(laneLength);
+      const generated = generateDiamondHistory({
+        suspectCount,
+        seed,
+        mutation: pickMutation(rng),
+        firstBadLane,
+        firstBadOnLane,
+      });
+      expect(optimalAccuse(generated), `diamond seed ${String(seed)}`).toBe(generated.firstBad);
     }
   });
 });

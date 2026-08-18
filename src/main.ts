@@ -1,5 +1,4 @@
 import { GameError } from "./core/errors";
-import { indexOfSha } from "./core/git";
 import {
   dispatch,
   isTutorialDone,
@@ -132,9 +131,7 @@ function paint(): void {
     return;
   }
   const session = boot.session;
-  const lo = indexOfSha(session.bisect.repo, session.bisect.knownGood);
-  const hi = indexOfSha(session.bisect.repo, session.bisect.knownBad);
-  const remaining = hi - lo;
+  const remaining = session.bisect.suspects.length;
   document.documentElement.dataset.outcome = session.outcome;
   if (session.outcome !== "playing") {
     document.title = "accused — it-worked-yesterday";
