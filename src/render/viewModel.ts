@@ -24,7 +24,8 @@ export type ViewNode = {
 };
 
 /**
- * Parent-to-child corridor along `repo.order`.
+ * Parent-to-child corridor. Linear histories emit one edge per step.
+ * A merge emits two, so the renderer can fork and join.
  */
 export type ViewEdge = {
   from: Sha;
@@ -116,8 +117,8 @@ export function buildViewModel(session: GameSession): ViewModel {
       label: tokens.label,
       lit: session.bisect.suspects.includes(sha),
     });
-    if (i > 0) {
-      edges.push({ from: shaAt(repo, i - 1), to: sha });
+    for (const parent of commit.parents) {
+      edges.push({ from: parent, to: sha });
     }
   }
   return {

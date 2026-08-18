@@ -48,6 +48,8 @@ describe("buildViewModel", () => {
     expect(interior).toMatchObject({ shape: "fog", label: "fog", lit: true });
     expect(newest).toMatchObject({ shape: "rot", label: "rot", lit: true });
     expect(newest.sha).toBe(session.bisect.knownBad);
+    expect(vm.edges).toHaveLength(8);
+    expect(vm.edges[0]).toEqual({ from: oldest.sha, to: vm.nodes[1]?.sha });
     expect(vm.colors).toEqual({
       good: "amber",
       bad: "magenta",
