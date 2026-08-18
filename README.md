@@ -10,6 +10,8 @@ Each room is a commit. The suite runs. You mark it good or bad. The engine check
 
 You accuse one SHA. If it is the first bad, you were right. Share the seed.
 
+![Win card](docs/win-card.png)
+
 ## Play live
 
 _GitHub Pages URL goes here._
@@ -27,6 +29,7 @@ Quality gates:
 npm test
 npm run typecheck
 npm run lint
+npm run e2e
 ```
 
 ## Design

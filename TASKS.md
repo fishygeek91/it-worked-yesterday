@@ -160,9 +160,9 @@ One task per session. Do not start the next until the current task's acceptance 
 
 ### TASK 14 — README screenshot + live placeholder
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 9
 - **Deliverables:** README "Play live" placeholder, one real screenshot of the win card, local run instructions, link to design.
 - **Acceptance:**
-  - [ ] What-it-is stays ≤ 6 lines.
-  - [ ] Live URL is a placeholder until Pages is enabled by a human.
+  - [x] What-it-is stays ≤ 6 lines.
+  - [x] Live URL is a placeholder until Pages is enabled by a human.
