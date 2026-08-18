@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 /**
- * Playwright is installed in Phase 0. Specs land in TASK 13.
+ * Preview the built app. Specs drive the UI; they do not import the suite.
  */
 export default defineConfig({
   testDir: "e2e",
@@ -12,6 +12,7 @@ export default defineConfig({
   webServer: {
     command: "npm run build && npm run preview -- --host 127.0.0.1 --port 4173",
     port: 4173,
+    timeout: 120000,
     reuseExistingServer: process.env["CI"] === undefined,
   },
 });

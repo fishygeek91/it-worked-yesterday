@@ -1,0 +1,49 @@
+import { expect, test, type Page } from "@playwright/test";
+
+/**
+ * Mark the current room from the chrome copy. The spec never imports the suite.
+ *
+ * @param page - Browser page
+ */
+async function markWhatTheRoomSaid(page: Page): Promise<void> {
+  const room = await page.locator(".room").innerText();
+  if (room.includes("This checkout is green. The suite passed.")) {
+    await page.locator("[data-command=\"good\"]").click();
+    return;
+  }
+  if (room.includes("This checkout is red.")) {
+    await page.locator("[data-command=\"bad\"]").click();
+    return;
+  }
+  throw new Error(`unexpected room copy: ${room}`);
+}
+
+test("wins the tutorial by marking what the room said", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("#chrome")).toBeVisible();
+  await expect(page.locator(".teach").nth(0)).toHaveText(
+    "HEAD is red. The last green is 8 suspects back.",
+  );
+  await expect(page.locator(".teach").nth(1)).toHaveText("Mark the checkout. The range narrows.");
+  await expect(page.locator(".teach").nth(2)).toHaveText("When one SHA remains, accuse it.");
+  await expect(page.locator(".seed")).toHaveText("seed 1729");
+  await expect(page.locator(".share")).toHaveCount(0);
+
+  const accuse = page.locator("[data-command=\"accuse\"]");
+  for (let step = 0; step < 8; step += 1) {
+    if (await accuse.isEnabled()) {
+      break;
+    }
+    await markWhatTheRoomSaid(page);
+  }
+  await expect(accuse).toBeEnabled();
+  await accuse.click();
+
+  await expect(page.locator(".outcome")).toHaveText("Accused. That SHA was the first-bad.");
+  await expect(page.locator("#win-card")).toBeVisible();
+  await expect(page.locator(".win-seed")).toHaveText("seed 1729");
+  await expect(page.locator(".win-marks")).toHaveText("3 / 3");
+
+  const tutorialDone = await page.evaluate(() => window.localStorage.getItem("iwy.tutorialDone"));
+  expect(tutorialDone).toBe("1");
+});
