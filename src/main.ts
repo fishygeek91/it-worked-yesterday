@@ -1,7 +1,7 @@
 import { dispatch, sessionFromUrl } from "./harness";
 import { buildViewModel, renderGraph } from "./render";
 import "./style.css";
-import { renderChrome } from "./ui";
+import { renderChrome, renderWinCard } from "./ui";
 
 const found = document.querySelector("#app");
 if (!(found instanceof HTMLElement)) {
@@ -15,7 +15,11 @@ let session = sessionFromUrl(window.location.search);
  * Paint chrome and the dungeon map from the current session.
  */
 function paint(): void {
-  app.innerHTML = [renderChrome(session), renderGraph(buildViewModel(session))].join("");
+  const parts = [renderChrome(session), renderGraph(buildViewModel(session))];
+  if (session.outcome === "won") {
+    parts.push(renderWinCard(session));
+  }
+  app.innerHTML = parts.join("");
 }
 
 app.addEventListener("click", (event: Event) => {

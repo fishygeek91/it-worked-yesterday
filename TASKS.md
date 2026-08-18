@@ -110,12 +110,12 @@ One task per session. Do not start the next until the current task's acceptance 
 
 ### TASK 9 — Win card 1200×630
 
-- **Status:** ⬜
+- **Status:** ✅
 - **Deps:** TASK 7, TASK 8
 - **Deliverables:** Screenshot surface: graph with guilty SHA lit, mark count vs optimal, seed in the corner.
 - **Acceptance:**
-  - [ ] Element is 1200×630.
-  - [ ] Contains SHA, `marks / optimal`, and seed.
+  - [x] Element is 1200×630.
+  - [x] Contains SHA, `marks / optimal`, and seed.
 
 ## Phase 4 — Tutorial + two levels
 
